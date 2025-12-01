@@ -1,0 +1,184 @@
+################################################################################
+# COMMON CONFIG (active for all profiles)
+################################################################################
+spring:
+  cloud:
+    consul:
+      enabled: ${CONSUL_ENABLED:true}
+      host: ${CONSUL_HOST:localhost}
+      discovery:
+        tags: logistic-internal, api, internal, xam
+        prefer-ip-address: true
+        ip-address: ${IP_INSTANCE}
+        instance-id: logistic-internal-${HOSTNAME}
+        scheme: https
+        health-check-url: http://${IP_INSTANCE}:${MANAGEMENT_PORT:7205}/actuator/health
+        health-check-tls-skip-verify: true
+    openfeign:
+      httpclient:
+        disable-ssl-validation: ${OPENFEIGN_HTTPCLIENT_DISABLE_SSL_VALIDATION:true}
+      client:
+        config:
+          default:
+            loggerLevel: ${OPENFEIGN_CLIENT_CONFIG_DEFAULT_LOGGER_LEVEL:basic}
+  datasource:
+    url: ${LOGISTIC_DATASOURCE_URL:jdbc:postgresql://logistic-internal.service.consul:5432/logistic}
+    username: ${LOGISTIC_DATASOURCE_USERNAME:logistic}
+    password: ${LOGISTIC_DATASOURCE_PASSWORD}
+  jpa:
+    show-sql: ${SPRING_JPA_SHOW_SQL:false}
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        default_schema: ${SPRING_JPA_HIBERNATE_DEFAULT_SCHEMA:public}
+        jdbc:
+          lob:
+            non_contextual_creation: true
+  liquibase:
+    default-schema: ${spring.jpa.properties.hibernate.default_schema}
+    drop-first: ${LIQUIBASE_DROP_FIRST:false}
+    change-log: classpath:db/changelog-master.yml
+    contexts: ${LIQUIBASE_CONTEXTS:prod}
+  servlet:
+    multipart:
+      max-file-size: ${SERVLET_MULTIPART_MAX_FILE_SIZE:1024MB}
+      max-request-size: ${SERVLET_MULTIPART_MAX_REQUEST_SIZE:1024MB}
+
+logging:
+  file:
+    name: ${LOG_FILE_PATH:/app/logs/logistic_internal.json.log}
+  level:
+    fr.locarchives.dlab: ${LOGISTIC_LOG_LEVEL:DEBUG}
+
+server:
+  forward-headers-strategy: framework
+  port: ${SERVER_PORT:8205}
+  ssl:
+    key-store: ${SERVER_SSL_KEYSTORE:/app/conf/logistic/keystore.p12}
+    key-store-password: ${SERVER_SSL_KEYSTORE_PASSWORD:jkspasswd}
+    key-password: ${SERVER_SSL_KEY_PASSWORD:${SERVER_SSL_KEYSTORE_PASSWORD:jkspasswd}}
+  max-http-request-header-size: ${SERVER_MAX_HTTP_REQUEST_HEADER_SIZE:10KB}
+  tomcat:
+    accesslog:
+      enabled: ${SERVER_TOMCAT_ACCESSLOG_ENABLED:false}
+      directory: ${SERVER_TOMCAT_ACCESSLOG_DIRECTORY:/app/logs/}
+
+management:
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      instance: ${IP_INSTANCE}
+      hostname: ${HOSTNAME}
+      environment: ${ENVIRONMENT}
+  server:
+    port: ${MANAGEMENT_PORT:7205}
+    ssl:
+      enabled: ${MANAGEMENT_SERVER_SSL_ENABLED:false}
+
+security:
+  system:
+    identity: ${SECURITY_SYSTEM_IDENTITY:api-logistic-internal}
+    applicationId: ${SECURITY_SYSTEM_APPLICATION_ID:api-logistic-internal}
+    token: ${SECURITY_SYSTEM_TOKEN}
+    userId: ${SECURITY_SYSTEM_USER_ID:apiflowuser}
+
+barcode:
+  config:
+    pageWidth: ${BARCODE_CONFIG_PAGE_WIDTH:210 mm}
+    pageHeight: ${BARCODE_CONFIG_PAGE_HEIGHT:297 mm}
+    leftMargin: ${BARCODE_CONFIG_LEFT_MARGIN:0 mm}
+    rightMargin: ${BARCODE_CONFIG_RIGHT_MARGIN:0 mm}
+    topMargin: ${BARCODE_CONFIG_TOP_MARGIN:0 mm}
+    bottomMargin: ${BARCODE_CONFIG_BOTTOM_MARGIN:0 mm}
+    verticalGap: ${BARCODE_CONFIG_VERTICAL_GAP:0 mm}
+    horizontalGap: ${BARCODE_CONFIG_HORIZONTAL_GAP:0 mm}
+    barcodeType: ${BARCODE_CONFIG_BARCODE_TYPE:CODE_128}
+    barcodeWidth: ${BARCODE_CONFIG_BARCODE_WIDTH:70 mm}
+    barcodeHeight: ${BARCODE_CONFIG_BARCODE_HEIGHT:25 mm}
+    labelFontSize: ${BARCODE_CONFIG_LABEL_FONT_SIZE:13F}
+    codeFontSize: ${BARCODE_CONFIG_CODE_FONT_SIZE:10F}
+    printCode: ${BARCODE_CONFIG_PRINT_CODE:true}
+    printBox: ${BARCODE_CONFIG_PRINT_BOX:true}
+    horizontalPrints: ${BARCODE_CONFIG_HORIZONTAL_PRINTS:2}
+    verticalPrints: ${BARCODE_CONFIG_VERTICAL_PRINTS:4}
+
+workspace:
+  tempPath: ${WORKSPACE_TEMP_PATH:/app/data/logistic/workspace/tmp}
+
+springdoc:
+  app:
+    openIdConnectUrl: ${SPRINGDOC_APP_OPENIDCONNECTURL:https://kubernetes.xam.local/cas/oidc/.well-known/openid-configuration}
+  swagger-ui:
+    oauth:
+      client-id: ${SWAGGER_OAUTH_CLIENT_ID:logistic-swagger}
+    enabled: ${SPRINGDOC_SWAGGER_ENABLED:true}
+
+app:
+  gateway:
+    iam:
+      name: ${APP_GATEWAY_IAM_NAME:iam-internal}
+    archive:
+      name: ${APP_GATEWAY_ARCHIVE_NAME:archive-internal}
+
+################################################################################
+# kubernetes profile
+################################################################################
+---
+
+spring.config.activate.on-profile: kubernetes
+spring:
+  cloud:
+    kubernetes:
+      enabled: true
+      config:
+        enabled: false
+      reload:
+        enabled: false
+    consul:
+      enabled: false
+  rabbitmq:
+    username: ${SPRING_RABBITMQ_USERNAME}
+    password: ${SPRING_RABBITMQ_PASSWORD}
+
+################################################################################
+# opentelemetry profile
+################################################################################
+---
+
+spring.config.activate.on-profile: opentelemetry
+management:
+  opentelemetry:
+    resource-attributes:
+      deployment.environment: ${ENVIRONMENT}
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+      export:
+        enabled: ${OTEL_EXPORTER_OTLP_TRACING_ENABLED:true}
+  tracing:
+    enabled: ${MANAGEMENT_TRACING_ENABLED:true}
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_TRACING_ENDPOINT:http://localhost:9411/api/v2/spans}
+
+################################################################################
+# baaremetal profile
+################################################################################
+---
+
+spring.config.activate.on-profile: baaremetal
+server:
+  ssl:
+    enabled: ${SERVER_SSL_ENABLED:true}
+
+################################################################################
+# sae profile
+################################################################################
+---
+
+spring.config.activate.on-profile: sae
+spring:
+  cloud:
+    consul:
+      enabled: false

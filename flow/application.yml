@@ -1,0 +1,292 @@
+################################################################################
+# COMMON CONFIG (active for all profiles)
+################################################################################
+spring:
+  cloud:
+    consul:
+      enabled: ${CONSUL_ENABLED:true}
+      host: ${CONSUL_HOST:localhost}
+      discovery:
+        ipAddress: ${IP_INSTANCE}
+        tags: flow-internal, api, internal, xam
+        preferIpAddress: true
+        instance-id: flow-internal-${HOSTNAME}
+        scheme: https
+        health-check-url: http://${IP_INSTANCE}:${MANAGEMENT_PORT:7204}/actuator/health
+        health-check-tls-skip-verify: true
+    openfeign:
+      httpclient:
+        disable-ssl-validation: ${OPENFEIGN_HTTPCLIENT_DISABLE_SSL_VALIDATION:true}
+      client:
+        config:
+          default:
+            loggerLevel: ${OPENFEIGN_CLIENT_CONFIG_DEFAULT_LOGGER_LEVEL:basic}
+
+  data:
+    mongodb:
+      uri: mongodb://${MONGO_FLOW_USERNAME:api-flow}:${MONGO_FLOW_PASSWORD:api-flow}@${ENDPOINTS_MONGO}/${MONGO_FLOW_DATABASE:flow}?connectTimeoutMS=${MONGO_CONNECT_TIMEOUT_MS:2000}
+
+  mail:
+    test-connection: false
+    host: ${SMTP_HOST}
+    port: ${SMTP_PORT:25}
+    username: ${SMTP_USERNAME}
+    password: ${SMTP_PASSWORD}
+    mail-from: ${SMTP_MAIL_FROM}
+    properties:
+      mail:
+        smtp:
+          auth: ${SMTP_AUTH:true}
+          starttls:
+            enable: ${SMTP_ENABLE_STARTTLS:true}
+    mail-cc: ${FLOW_MAIL_CC:}
+
+  activemq:
+    broker-url: ${ACTIVEMQ_BROKER_URL}
+    user: ${ACTIVEMQ_USER}
+    password: ${ACTIVEMQ_PASSWORD}
+
+logging:
+  file:
+    name: ${LOG_FILE_PATH:/app/logs/flow_internal.json.log}
+  level:
+    fr.locarchives.dlab: ${FLOW_LOG_LEVEL:INFO}
+
+server:
+  forward-headers-strategy: framework
+  port: ${SERVER_PORT:8204}
+  ssl:
+    enabled: ${SERVER_SSL_ENABLED:true}
+    key-store: ${SERVER_SSL_KEYSTORE:/app/conf/flow/keystore.p12}
+    key-store-password: ${SERVER_SSL_KEYSTORE_PASSWORD:jkspasswd}
+    key-password: ${SERVER_SSL_KEY_PASSWORD:${SERVER_SSL_KEYSTORE_PASSWORD:jkspasswd}}
+  max-http-request-header-size: ${SERVER_MAX_HTTP_REQUEST_HEADER_SIZE:10KB}
+  tomcat:
+    accesslog:
+      enabled: ${SERVER_TOMCAT_ACCESSLOG_ENABLED:false}
+      directory: ${SERVER_TOMCAT_ACCESSLOG_DIRECTORY:/app/logs/}
+
+management:
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      instance: ${IP_INSTANCE}
+      hostname: ${HOSTNAME}
+      environment: ${ENVIRONMENT}
+  server:
+    port: ${MANAGEMENT_PORT:7204}
+    ssl:
+      enabled: ${MANAGEMENT_SERVER_SSL_ENABLED:false}
+
+security:
+  system:
+    identity: ${SECURITY_SYSTEM_IDENTITY:api-flow-internal}
+    applicationId: ${SECURITY_SYSTEM_APPLICATION_ID:api-flow-internal}
+    token: ${TOKEN_API_FLOW}
+    userId: ${SECURITY_SYSTEM_USER_ID:apiflowuser}
+
+flow-internal:
+  iam-internal-client:
+    server-host: ${IAM_SERVER_HOST:iam-internal.service.consul}
+    server-port: ${IAM_SERVER_PORT:6201}
+    secure: ${IAM_SERVER_SECURE:true}
+    ssl-configuration:
+      truststore:
+        key-path: ${SSL_TRUSTSTORE_PATH:/app/conf/flow/truststore.jks}
+        key-password: ${SSL_TRUSTSTORE_PASSWORD:jkspasswd}
+      hostname-verification: ${IAM_HOSTNAME_VERIFICATION:false}
+  archive-client:
+    server-host: ${ARCHIVE_SERVER_HOST:archive-internal.service.consul}
+    server-port: ${ARCHIVE_SERVER_PORT:8202}
+    secure: ${ARCHIVE_SERVER_SECURE:true}
+    ssl-configuration:
+      truststore:
+        key-path: ${SSL_TRUSTSTORE_PATH:/app/conf/flow/truststore.jks}
+        key-password: ${SSL_TRUSTSTORE_PASSWORD:jkspasswd}
+        type: JKS
+      hostname-verification: ${ARCHIVE_HOSTNAME_VERIFICATION:false}
+  logistic-internal-client:
+    server-host: ${LOGISTIC_SERVER_HOST:logistic-internal.service.consul}
+    server-port: ${LOGISTIC_SERVER_PORT:8205}
+    secure: ${LOGISTIC_SERVER_SECURE:true}
+    connect-timeOut: ${LOGISTIC_CONNECT_TIMEOUT:30}
+    read-timeOut: ${LOGISTIC_READ_TIMEOUT:30}
+    write-timeOut: ${LOGISTIC_WRITE_TIMEOUT:30}
+    ssl-configuration:
+      truststore:
+        key-path: ${SSL_TRUSTSTORE_PATH:/app/conf/flow/truststore.jks}
+        key-password: ${SSL_TRUSTSTORE_PASSWORD:jkspasswd}
+        type: JKS
+      hostname-verification: ${LOGISTIC_HOSTNAME_VERIFICATION:false}
+
+platform-informations:
+  name: ${PLATFORM_NAME:X-AM}
+  theme:
+    header-logo: ${HEADER_LOGO}
+
+folders:
+  assets: ${FOLDERS_ASSETS:/app/conf/assets}
+
+workspace:
+  itemPath: ${WORKSPACE_ITEM_PATH:/app/data/flow/workspace/item}
+  operationPath: ${WORKSPACE_OPERATION_PATH:/app/data/flow/workspace/operations}
+  tempPath: ${WORKSPACE_TEMP_PATH:/app/data/flow/workspace/tmp}
+
+operation:
+  folder:
+  vitam:
+    cronExpression: ${OPERATION_VITAM_CRON_EXPRESSION:0/30 * * * * ?}
+
+workflow:
+  transfer:
+    disposal:
+      cronExpression: ${WORKFLOW_TRANSFER_DISPOSAL_CRON:0/30 * * * * ?}
+    ingest:
+      cronExpression: ${WORKFLOW_TRANSFER_INGEST_CRON:0/30 * * * * ?}
+  accessItem:
+    dexto:
+      cronExpression: ${WORKFLOW_ACCESS_ITEM_DEXTO_CRON:0/30 * * * * ?}
+  operation:
+    cronExpression: ${WORKFLOW_OPERATION_CRON:0/30 * * * * ?}
+
+item:
+  unit:
+    limit:
+      creation: ${ITEM_UNIT_LIMIT_CREATION:1000}
+      total: ${ITEM_UNIT_LIMIT_TOTAL:10000}
+      disposal-creation: ${ITEM_UNIT_DISPOSAL_CREATION:10000}
+      disposal-total: ${ITEM_UNIT_DISPOSAL_TOTAL:10000}
+
+index-item-documents:
+  maximum-document-number: ${INDEX_ITEM_MAX_DOCUMENTS}
+  maximum-document-size: ${INDEX_ITEM_MAX_DOCUMENT_SIZE}
+  maximum-total-document-size: ${INDEX_ITEM_MAX_TOTAL_SIZE}
+
+maximum-sip-size: ${MAXIMUM_SIP_SIZE}
+
+qrcode:
+  casUrl: ${QRCODE_CAS_URL}
+  flowUrl: ${QRCODE_FLOW_URL}
+  dev:
+    enabled: ${QRCODE_DEV_ENABLED:false}
+    defaultPassword: ${QRCODE_DEV_DEFAULT_PASSWORD}
+    defaultLogin: ${QRCODE_DEV_DEFAULT_LOGIN}
+    environment: ${ENVIRONMENT}
+
+scheduler:
+  itemConsultation:
+    dayIntervalThreshold: ${SCHEDULER_ITEM_CONSULTATION_DAY_INTERVAL:10}
+  flowStatus:
+    cronExpression: ${SCHEDULER_FLOW_STATUS_CRON:0/30 * * * * ?}
+  itemCleaning:
+    cronExpression: ${SCHEDULER_ITEM_CLEANING_CRON:0/30 * * * * ?}
+    retentionPeriod: ${SCHEDULER_ITEM_CLEANING_RETENTION:30}
+    limit: ${SCHEDULER_ITEM_CLEANING_LIMIT:1000}
+  operation:
+    timeoutJob:
+      cronExpression: ${SCHEDULER_OPERATION_TIMEOUT_CRON:0/30 * * * * ?}
+    obsolete:
+      cronExpression: ${SCHEDULER_OPERATION_OBSOLETE_CRON:0/30 * * * * ?}
+    vitamOperation:
+      cronExpression: ${SCHEDULER_OPERATION_VITAM_CRON:0/30 * * * * ?}
+  uploadDocumentsCleaning:
+       cronExpression: ${SCHEDULER_UPLOAD_DOCUMENTS_CLEANING_CRON}
+       retentionTimeInMilliseconds: ${SCHEDULER_UPLOAD_DOCUMENTS_CLEANING_RETENTION}
+  unitCleaning:
+    cronExpression: ${SCHEDULER_UNIT_CLEANING_CRON}
+    retentionTimeInDay: ${SCHEDULER_UNIT_CLEANING_RETENTION}
+  blockedItem:
+    cronExpression: ${SCHEDULER_BLOCKED_ITEM_CRON}
+    maxDelayBlocked: ${SCHEDULER_BLOCKED_ITEM_MAX_DELAY}
+  itemUserAlerts:
+    cronExpression: ${SCHEDULER_ITEM_USER_ALERTS_CRON}
+    maxAlertsPerUser: ${SCHEDULER_ITEM_USER_ALERTS_MAX}
+  armoniSync:
+    enabled: ${SCHEDULER_ARMONI_SYNC_ENABLED:false}
+    cronExpression: ${SCHEDULER_ARMONI_SYNC_CRON}
+  itemDocumentCleaning:
+    cronExpression: ${SCHEDULER_ITEM_DOCUMENT_CLEANING_CRON}
+    maxDelayItemDocumentCleaning: ${SCHEDULER_ITEM_DOCUMENT_CLEANING_MAX_DELAY}
+
+instance:
+  primary: ${INSTANCE_PRIMARY:true}
+
+logbook:
+  scheduling:
+    enabled: ${LOGBOOK_SCHEDULING_ENABLED:true}
+    sendEventToVitamTasks:
+      delay: ${LOGBOOK_SCHEDULING_DELAY:1000}
+
+timer.period: ${TIMER_PERIOD:30000}
+spring.activemq.packages.trusted: fr.locarchives.dlab, fr.gouv.vitamui, java
+spring.files.workspace: ${SPRING_FILES_WORKSPACE:~/workspace/flow}
+
+fulltext.maximum.length: ${FULLTEXT_MAXIMUM_LENGTH:100000}
+
+###########################
+# Profile: kubernetes
+###########################
+---
+spring:
+  config:
+    activate:
+      on-profile: kubernetes
+  cloud:
+    kubernetes:
+      reload:
+        enabled: ${K8S_RELOAD_ENABLED:true}
+      discovery:
+        enabled: ${K8S_DISCOVERY_ENABLED:true}
+
+###########################
+# Profile: opentelemetry
+###########################
+---
+spring:
+  config:
+    activate:
+      on-profile: opentelemetry
+management:
+  otlp:
+    tracing:
+      endpoint: ${OTLP_TRACING_ENDPOINT:http://127.0.0.1:4318/v1/traces}
+  tracing:
+    enabled: ${TRACING_ENABLED:false}
+
+###########################
+# Profile: baremetal
+###########################
+---
+spring:
+  config:
+    activate:
+      on-profile: baremetal
+
+###########################
+# Profile: sae (only if configured)
+###########################
+---
+spring:
+  config:
+    activate:
+      on-profile: sae
+sae:
+  type: ${SAE_TYPE}
+  esafe:
+    organization:
+      id-strategy: ${SAE_ESAFE_ORGANIZATION_ID_STRATEGY:SEQUENCE}
+    url: ${SAE_ESAFE_URL}
+    loggerLevel: ${SAE_ESAFE_LOGGER_LEVEL:basic}
+    security:
+      oauth2:
+        client:
+          registration-id: ${SAE_ESAFE_CLIENT_REGISTRATION_ID}
+      user:
+        name: ${SAE_ESAFE_USER_NAME}
+        access-key: ${SAE_ESAFE_USER_ACCESS_KEY}
+  hybrid:
+    default-sae: ${SAE_HYBRID_DEFAULT:vitam}
+    tenant-mapping:
+      type: file
+      file:
+        path: ${SAE_HYBRID_TENANT_MAPPING_FILE_PATH}

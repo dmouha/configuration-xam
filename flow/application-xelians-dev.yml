@@ -1,0 +1,58 @@
+spring:
+  application:
+    name: flow
+  cloud:
+    consul:
+      discovery:
+        ipAddress: ${IP_INSTANCE}
+        instance-id: flow-internal-${ENVIRONMENT}
+        health-check-url: http://${IP_INSTANCE}:5018/actuator/health
+
+  data:
+    mongodb:
+      uri: mongodb://api-flow:api-flow@${IP_INSTANCE}:27019/flow?connectTimeoutMS=2000
+
+  mail:
+    test-connection: false
+    host: smtp-xam-int.xelians-dev.fr
+    port: 2525
+    username: no-reply.${ENVIRONMENT}.dlab@xelians.fr
+    password:
+    mail-from: no-${ENVIRONMENT}.dlab@xelians.fr
+    properties:
+      mail:
+        smtp:
+          auth: False
+          starttls:
+            enable: false
+
+  activemq:
+    broker-url: failover:tcp://${IP_INSTANCE}:61616
+    user: system
+
+logging:
+  level:
+    fr.locarchives.dlab: DEBUG
+
+server:
+  port: 6018
+  max-http-request-header-size: 10KB
+
+management:
+  otlp:
+    tracing:
+      endpoint: http://tracing.xelians-dev.fr:4318/v1/traces
+  server:
+    port: 5018
+
+security:
+  system:
+    token: tokapiflow_x2wiZu3B5grvDfVH
+
+flow-internal:
+  iam-internal-client:
+    server-port: 6003
+  archive-client:
+    server-port: 6014
+  logistic-internal-client:
+    server-port: 6015

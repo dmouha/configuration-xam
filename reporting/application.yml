@@ -1,0 +1,196 @@
+################################################################################
+# COMMON CONFIG (active for all profiles)
+################################################################################
+spring:
+  cloud:
+    consul:
+      enabled: ${CONSUL_ENABLED:true}
+      host: ${CONSUL_HOST:localhost}
+      discovery:
+        ipAddress: ${IP_INSTANCE}
+        tags: reporting-internal, api, internal, xam
+        preferIpAddress: true
+        instance-id: reporting-internal-${HOSTNAME}
+        scheme: https
+        health-check-url: http://${IP_INSTANCE}:${MANAGEMENT_PORT:5010}/actuator/health
+        health-check-tls-skip-verify: true
+    openfeign:
+      httpclient:
+        disable-ssl-validation: ${OPENFEIGN_HTTPCLIENT_DISABLE_SSL_VALIDATION:true}
+      client:
+        config:
+          default:
+            loggerLevel: ${OPENFEIGN_CLIENT_CONFIG_DEFAULT_LOGGER_LEVEL:basic}
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://reporting:reporting@localhost:27017/reporting?connectTimeoutMS=2000}
+
+sae:
+  type: ${SAE_TYPE:hybrid}
+  esafe:
+    organization:
+      id-strategy: ${SAE_ESAFE_ORGANIZATION_ID_STRATEGY:RANDOM}
+    url: ${SAE_ESAFE_URL:https://esafe-integration.xelians-dev.fr}
+    loggerLevel: ${SAE_ESAFE_LOGGER_LEVEL:FULL}
+    security:
+      user:
+        username: ${SAE_ESAFE_SECURITY_USER_USERNAME:root}
+        api-key: ${SAE_ESAFE_SECURITY_USER_API_KEY}
+  hybrid:
+    default-sae: ${SAE_HYBRID_DEFAULT_SAE:vitam}
+    tenant-mapping:
+      type: ${SAE_HYBRID_TENANT_MAPPING_TYPE:file}
+      file:
+        path: ${SAE_HYBRID_TENANT_MAPPING_FILE_PATH:/app/data/iam/tenant.json}
+
+server:
+  forward-headers-strategy: framework
+  port: ${SERVER_PORT:6010}
+  ssl:
+    key-store: ${SERVER_SSL_KEYSTORE:/app/conf/reporting/keystore.p12}
+    key-store-password: ${SERVER_SSL_KEYSTORE_PASSWORD:changeme}
+    key-password: ${SERVER_SSL_KEY_PASSWORD:${SERVER_SSL_KEYSTORE_PASSWORD:changeme}}
+  max-http-request-header-size: ${SERVER_MAX_HTTP_REQUEST_HEADER_SIZE:10KB}
+  tomcat:
+    accesslog:
+      enabled: ${SERVER_TOMCAT_ACCESSLOG_ENABLED:false}
+      directory: ${SERVER_TOMCAT_ACCESSLOG_DIRECTORY:/app/logs/}
+
+management:
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      instance: ${IP_INSTANCE}
+      hostname: ${HOSTNAME}
+      environment: ${ENVIRONMENT}
+  server:
+    port: ${MANAGEMENT_PORT:5010}
+    ssl:
+      enabled: ${MANAGEMENT_SERVER_SSL_ENABLED:false}
+
+logging:
+  file:
+    name: ${LOG_FILE_PATH:/app/logs/reporting_internal.json.log}
+  level:
+    fr.locarchives.dlab: ${REPORTING_LOG_LEVEL:DEBUG}
+    fr.gouv.vitamui.referential.internal.server: ${REFERENTIAL_SERVER_LOG_LEVEL:INFO}
+
+security:
+  system:
+    identity: ${SECURITY_SYSTEM_IDENTITY:api-flow-internal}
+    applicationId: ${SECURITY_SYSTEM_APPLICATION_ID:api-flow-internal}
+    token: ${SECURITY_SYSTEM_TOKEN}
+    userId: ${SECURITY_SYSTEM_USER_ID:apiflowuser}
+
+reporting-internal:
+  archive-client:
+    server-host: ${REPORTING_ARCHIVE_CLIENT_HOST:archive-internal.service.consul}
+    server-port: ${REPORTING_ARCHIVE_CLIENT_PORT:6014}
+    secure: ${REPORTING_ARCHIVE_CLIENT_SECURE:true}
+    ssl-configuration:
+      truststore:
+        key-path: ${REPORTING_TRUSTSTORE_PATH:/app/conf/reporting/truststore_server.jks}
+        key-password: ${REPORTING_TRUSTSTORE_PASSWORD:changeme}
+      hostname-verification: ${REPORTING_HOSTNAME_VERIFICATION:false}
+  iam-internal-client:
+    server-host: ${REPORTING_IAM_CLIENT_HOST:iam-internal.service.consul}
+    server-port: ${REPORTING_IAM_CLIENT_PORT:6003}
+    secure: ${REPORTING_IAM_CLIENT_SECURE:true}
+    ssl-configuration:
+      truststore:
+        key-path: ${REPORTING_TRUSTSTORE_PATH:/app/conf/reporting/truststore_server.jks}
+        key-password: ${REPORTING_TRUSTSTORE_PASSWORD:changeme}
+      hostname-verification: ${REPORTING_HOSTNAME_VERIFICATION:false}
+  flow-internal-client:
+    server-host: ${REPORTING_FLOW_CLIENT_HOST:flow-internal.service.consul}
+    server-port: ${REPORTING_FLOW_CLIENT_PORT:6018}
+    secure: ${REPORTING_FLOW_CLIENT_SECURE:true}
+    read-time-out: ${REPORTING_FLOW_READ_TIMEOUT:300}
+    write-time-out: ${REPORTING_FLOW_WRITE_TIMEOUT:300}
+    ssl-configuration:
+      truststore:
+        key-path: ${REPORTING_TRUSTSTORE_PATH:/app/conf/reporting/truststore_server.jks}
+        key-password: ${REPORTING_TRUSTSTORE_PASSWORD:changeme}
+      hostname-verification: ${REPORTING_HOSTNAME_VERIFICATION:false}
+
+tenants-to-exclude: ${TENANTS_TO_EXCLUDE:-1, 1, 20, 27, 10, 11, 10, 11, 102, 103, 104, 105, 106}
+job:
+  launch-on-startup: ${JOB_LAUNCH_ON_STARTUP:false}
+  reporting-data-for-current-day: ${JOB_REPORTING_DATA_FOR_CURRENT_DAY:false}
+  number-of-days-to-catch-up: ${JOB_NUMBER_OF_DAYS_TO_CATCH_UP:1}
+  stock:
+    cronExpression: ${JOB_STOCK_CRON_EXPRESSION:0 0 10 ? * *}
+    zone: ${JOB_STOCK_ZONE:Europe/Paris}
+    chunk: ${JOB_STOCK_CHUNK:10}
+    maximum-years: ${JOB_STOCK_MAXIMUM_YEARS:10}
+
+springdoc:
+  app:
+    openIdConnectUrl: ${SPRINGDOC_APP_OPENIDCONNECTURL:https://kubernetes.xam.local/cas/oidc/.well-known/openid-configuration}
+  swagger-ui:
+    oauth:
+      client-id: ${SWAGGER_OAUTH_CLIENT_ID:reporting-swagger}
+    enabled: ${SPRINGDOC_SWAGGER_ENABLED:true}
+
+app:
+  gateway:
+    iam:
+      name: ${APP_GATEWAY_IAM_NAME:iam-internal}
+    archive:
+      name: ${APP_GATEWAY_ARCHIVE_NAME:archive-internal}
+    flow:
+      name: ${APP_GATEWAY_FLOW_NAME:flow-internal}
+
+################################################################################
+# kubernetes profile
+################################################################################
+---
+
+spring.config.activate.on-profile: kubernetes
+spring:
+  cloud:
+    kubernetes:
+      enabled: true
+      config:
+        enabled: false
+      reload:
+        enabled: false
+    consul:
+      enabled: false
+
+################################################################################
+# opentelemetry profile
+################################################################################
+---
+
+spring.config.activate.on-profile: opentelemetry
+management:
+  opentelemetry:
+    resource-attributes:
+      deployment.environment: ${ENVIRONMENT}
+  otlp:
+    tracing:
+      endpoint: ${OTEL_EXPORTER_OTLP_ENDPOINT}
+      export:
+        enabled: ${OTEL_EXPORTER_OTLP_TRACING_ENABLED:true}
+
+################################################################################
+# baaremetal profile
+################################################################################
+---
+
+spring.config.activate.on-profile: baaremetal
+server:
+  ssl:
+    enabled: ${SERVER_SSL_ENABLED:true}
+
+################################################################################
+# sae profile
+################################################################################
+---
+
+spring.config.activate.on-profile: sae
+spring:
+  cloud:
+    consul:
+      enabled: false
