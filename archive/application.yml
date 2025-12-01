@@ -1,0 +1,325 @@
+################################################################################
+# COMMON CONFIG (active for all profiles)
+################################################################################
+spring:
+  cloud:
+    consul:
+      enabled: true
+      host: localhost
+      discovery:
+        # You can override with CONSUL_DISCOVERY_TAGS (comma-separated)
+        tags: archive-internal, api, internal, xam
+        prefer-ip-address: true
+        ip-address: ${IP_INSTANCE}
+        instance-id: archive-internal-${HOSTNAME}
+        scheme: https
+        # Override if needed
+        health-check-url: http://${IP_INSTANCE}:${MANAGEMENT_PORT:7202}/actuator/health
+        health-check-tls-skip-verify: true
+
+    openfeign:
+      httpclient:
+        # default: true (disable SSL validation)
+        disable-ssl-validation: ${OPENFEIGN_HTTPCLIENT_DISABLE_SSL_VALIDATION:true}
+      client:
+        config:
+          default:
+            # BASIC, FULL, HEADERS, NONE
+            loggerLevel: ${OPENFEIGN_CLIENT_CONFIG_DEFAULT_LOGGER_LEVEL:basic}
+
+  data:
+    mongodb:
+      # NOTE: MONGO_ARCHIVE_TIMEOUT default is 200 ms (your request)
+      uri: mongodb://${MONGO_ARCHIVE_USERNAME}:${MONGO_ARCHIVE_PASSWORD:archive}@${ENDPOINTS_MONGO}/archive?connectTimeoutMS=${MONGO_ARCHIVE_TIMEOUT:200}
+
+  mail:
+    test-connection: false
+    host: ${SMTP_HOST}
+    port: ${SMTP_PORT:25}
+    username: ${SMTP_USERNAME}
+    password: ${SMTP_PASSWORD}
+    mail-from: ${SMTP_MAIL_FROM}
+    properties:
+      mail:
+        smtp:
+          auth: ${SMTP_AUTH:true}
+          starttls:
+            # fixed typo: STARTTLS
+            enable: ${SMTP_ENABLE_STARTTLS:true}
+
+  servlet:
+    multipart:
+      enabled: true
+      resolve-lazily: true
+      max-file-size: ${ARCHIVE_SERVLET_MULTIPART_MAX_FILE_SIZE:100MB}
+      max-request-size: ${ARCHIVE_SERVLET_MULTIPART_MAX_REQUEST_SIZE:100MB}
+
+logging:
+  file:
+    # You can override everything with ARCHIVE_LOG_FILE
+    name: /app/logs/archive_internal.json.log
+  level:
+    # your custom package
+    fr.locarchives.dlab: ${ARCHIVE_LOG_LEVEL:INFO}
+
+server:
+  forward-headers-strategy: framework
+  port: ${SERVER_PORT:8202}
+  ssl:
+    enabled: ${SERVER_SSL_ENABLED:true}
+    key-store: ${SERVER_SSL_KEYSTORE:/app/conf/archive/keystore.p12}
+    key-store-password: ${SERVER_SSL_KEYSTORE_PASSWORD:changeit}
+    key-password: ${SERVER_SSL_KEY_PASSWORD:${SERVER_SSL_KEYSTORE_PASSWORD:changeit}}
+  max-http-request-header-size: ${SERVER_MAX_HTTP_REQUEST_HEADER_SIZE:32KB}
+  tomcat:
+    accesslog:
+      enabled: ${SERVER_TOMCAT_ACCESSLOG_ENABLED:false}
+      directory: ${SERVER_TOMCAT_ACCESSLOG_DIRECTORY:/app/logs/}
+
+management:
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      instance: ${INSTANCE_IP}
+      hostname: ${HOSTNAME}
+      environment: ${ENVIRONMENT}
+  server:
+    port: ${MANAGEMENT_PORT:7202}
+    ssl:
+      enabled: ${MANAGEMENT_SERVER_SSL_ENABLED:false}
+
+token:
+  api:
+    iam: ${TOKEN_API_IAM}
+
+fulltext:
+  maximum:
+    length: ${FULLTEXT_MAXIMUM_LENGTH:100000}
+    file:
+      size: ${FULLTEXT_MAXIMUM_FILE_SIZE:104857600} # 100MB
+
+basket-params:
+  maxBasketsPerUser: ${BASKET_MAX_BASKETS_PER_USER:10}
+  maxItemsPerBasket: ${BASKET_MAX_ITEMS_PER_BASKET:100}
+
+system-tenant-identifier: ${SYSTEM_TENANT_IDENTIFIER:11}
+
+ui-archive:
+  url: ${UI_ARCHIVE_BASE_URL}
+  archive-app-path: ${UI_ARCHIVE_APP_PATH:/archive/tenant}
+
+portal:
+  url: ${PORTAL_BASE_URL}
+
+scheduler:
+  numbering-order-reset:
+    cron-expression: ${SCHEDULER_NUMBERING_ORDER_RESET_CRON_EXPRESSION:0 0 0 * * ?}
+  item-consultation:
+    cron-expression: ${MAILING_ITEM_CONSULTATION_CRON_EXPRESSION:0 0 10 ? * MON}
+    day-interval-threshold: ${MAILING_DAY_INTERVAL_THRESHOLD:10}
+  basket-expiration:
+    cron-expression: ${SCHEDULER_NIGHTLY_CRON_EXPRESSION:0 0 10 ? * *}
+    month-interval-expiration: ${BASKET_MONTH_INTERVAL_EXPIRATION:3}
+  operation:
+    timeoutJob:
+      cronExpression: ${SCHEDULER_OPERATION_TIMEOUT_CRON_EXPRESSION:0 0 * ? * *}
+    obsolete:
+      cronExpression: ${SCHEDULER_OPERATION_OBSOLETE_CRON_EXPRESSION:0 0 10 ? * *}
+    retention-period: # in hours
+      terminated: ${SCHEDULER_TERMINATED_OPERATION_RETENTION_PERIOD:1}
+      failed: ${SCHEDULER_FAILED_OPERATION_RETENTION_PERIOD:48}
+
+display-extract-form:
+  extract-forms:
+    - type: ${EXTRACT_FORM_TYPE:DEFAULT}
+      first-field: ${EXTRACT_FORM_FIRST_FIELD:ref}
+      second-field: ${EXTRACT_FORM_SECOND_FIELD:label}
+      length: ${EXTRACT_FORM_LENGTH:10}
+      mandatory: ${EXTRACT_FORM_MANDATORY:true}
+      number-only: ${EXTRACT_FORM_NUMBER_ONLY:false}
+
+integrity-attestation:
+  instance-operator-logo: ${INTEGRITY_INSTANCE_OPERATOR_LOGO:/assets/logo.png}
+  instance-operator: "${INTEGRITY_INSTANCE_OPERATOR:My Operator}"
+  product-name: "${INTEGRITY_PRODUCT_NAME:My Product}"
+  logo-nf: ${INTEGRITY_LOGO_NF:/app/conf/assets/logo-nf.png}
+  social-reason-1: "${INTEGRITY_SOCIAL_REASON_1:Reason 1}"
+  social-reason-2: "${INTEGRITY_SOCIAL_REASON_2:Reason 2}"
+
+folders:
+  assets: "/app/conf/assets"
+
+holding:
+  position:
+    max-virtual-unit-nodes-levels: ${HOLDING_POSITION_VIRTUAL_NODES_LEVELS:3}
+
+workspace:
+  operationPath: "/app/data/workspace/operations"
+  tempPath: "/app/data/workspace/tmp"
+
+common:
+  asyncTasks:
+    timeout: ${COMMON_ASYNC_TIMEOUT:PT10M}
+    delay: ${COMMON_ASYNC_DELAY:PT5S}
+    poolSize: ${COMMON_ASYNC_POOL_SIZE:50}
+    awaitTerminationSeconds: ${COMMON_ASYNC_AWAIT_TERMINATION_SECONDS:10}
+    waitForTasksToCompleteOnShutdown: ${COMMON_ASYNC_WAIT_FOR_TASKS_ON_SHUTDOWN:true}
+
+vitam-async-task:
+  ingest-timeout: ${VITAM_ASYNC_UNITARY_INGEST_TIMEOUT:30} # minutes
+  export-timeout: ${VITAM_ASYNC_EXPORT_TIMEOUT:60} # minutes
+
+instance:
+  primary: ${INSTANCE_PRIMARY:true}
+
+logbook:
+  scheduling:
+    enabled: ${ARCHIVE_LOGBOOK_SCHEDULING_ENABLED:true}
+    sendEventToVitamTasks:
+      delay: ${ARCHIVE_LOGBOOK_SCHEDULING_DELAY:1000}
+
+barcode:
+  client: ${BARCODE_CLIENT:default}
+  config:
+    pageWidth: ${BARCODE_CONFIG_PAGE_WIDTH:210}
+    pageHeight: ${BARCODE_CONFIG_PAGE_HEIGHT:297}
+    leftMargin: ${BARCODE_CONFIG_LEFT_MARGIN:10}
+    rightMargin: ${BARCODE_CONFIG_RIGHT_MARGIN:10}
+    topMargin: ${BARCODE_CONFIG_TOP_MARGIN:10}
+    bottomMargin: ${BARCODE_CONFIG_BOTTOM_MARGIN:10}
+    verticalGap: ${BARCODE_CONFIG_VERTICAL_GAP:5}
+    horizontalGap: ${BARCODE_CONFIG_HORIZONTAL_GAP:5}
+    barcodeType: ${BARCODE_CONFIG_BARCODE_TYPE:CODE128}
+    barcodeWidth: ${BARCODE_CONFIG_BARCODE_WIDTH:100}
+    barcodeHeight: ${BARCODE_CONFIG_BARCODE_HEIGHT:50}
+    labelFontSize: ${BARCODE_CONFIG_LABEL_FONT_SIZE:10}
+    codeFontSize: ${BARCODE_CONFIG_CODE_FONT_SIZE:8}
+    printCode: ${BARCODE_CONFIG_PRINT_CODE:true}
+    printBox: ${BARCODE_CONFIG_PRINT_BOX:false}
+    horizontalPrints: ${BARCODE_CONFIG_HORIZONTAL_PRINTS:2}
+    verticalPrints: ${BARCODE_CONFIG_VERTICAL_PRINTS:5}
+
+archive:
+  item:
+    maximum:
+      size: ${ARCHIVE_UNITARY_INGEST_MAX_SIZE:1073741824} # 1GB
+
+originating-referential:
+  import:
+    text-fields:
+      max-long-text-length: ${IMPORT_MAX_LONG_TEXT_LENGTH:5000}
+      max-small-text-length: ${IMPORT_MAX_SMALL_TEXT_LENGTH:150}
+
+temp:
+  directory:
+    path: ${TEMP_DIRECTORY_PATH:/tmp}
+
+springdoc:
+  app:
+    openIdConnectUrl: ${SPRINGDOC_OPENID_CONNECT_URL}
+  swagger-ui:
+    oauth:
+      client-id: ${SPRINGDOC_SWAGGER_CLIENT_ID:archive-swagger}
+    enabled: ${SWAGGER_ENABLED:false}
+
+app:
+  gateway:
+    iam:
+      name: ${APP_GATEWAY_IAM_NAME:iam-internal}
+    flow:
+      name: ${APP_GATEWAY_FLOW_NAME:flow-internal}
+    logistic:
+      name: ${APP_GATEWAY_LOGISTIC_NAME:logistic-internal}
+
+
+    
+################################################################################
+# PROFILE: abremetal
+# - Structured console logging in file
+################################################################################
+---
+spring.config.activate.on-profile: baremetal
+logging:
+  structured:
+    format:
+      file: logstash
+  file:
+    name: /app/logs/${spring.application.name}.json.log
+
+
+################################################################################
+# PROFILE: kubernetes
+# - Structured console logging (logstash)
+################################################################################
+---
+spring.config.activate.on-profile: kubernetes
+
+logging:
+  structured:
+    format:
+      console: logstash
+
+################################################################################
+# PROFILE: opentelemetry
+# (replacement for "if tracing.enabled is sameas true")
+################################################################################
+---
+spring.config.activate.on-profile: opentelemetry
+
+management:
+  opentelemetry:
+    resource-attributes:
+      deployment.environment: ${ENVIRONMENT}
+  otlp:
+    tracing:
+      endpoint: ${TRACING_OTLP_COLLECTOR_ENDPOINT}
+      export:
+        enabled: ${TRACING_ENABLED}
+
+
+################################################################################
+# PROFILE: sae
+# (replacement for `{% if sae is defined and (sae.type == 'esafe' or 'hybrid') %}`)
+################################################################################
+---
+spring.config.activate.on-profile: sae
+
+spring:
+  security:
+    oauth2:
+      client:
+        provider:
+          esafe:
+            authorization-uri: ${SAE_ESAFE_URL}/oauth2/authorize
+            token-uri: ${SAE_ESAFE_URL}/oauth2/token
+            user-info-uri: ${SAE_ESAFE_URL}/userinfo
+            jwk-set-uri: ${SAE_ESAFE_URL}/oauth2/jwks
+        registration:
+          xam:
+            client-id: ${SAE_ESAFE_CLIENT_ID:xam}
+            client-secret: ${SAE_ESAFE_CLIENT_SECRET:changeit}
+            client-authentication-method: client_secret_post
+            authorization-grant-type: access_key
+            scope: openid
+            provider: esafe
+
+sae:
+  type: ${SAE_TYPE:vitam}
+  esafe:
+    organization:
+      id-strategy: ${SAE_ESAFE_ORGANIZATION_ID_STRATEGY:RANDOM}
+    url: ${SAE_ESAFE_URL}
+    loggerLevel: ${SAE_ESAFE_LOGGER_LEVEL:FULL}
+    security:
+      oauth2:
+        client:
+          registration-id: ${SAE_ESAFE_REGISTRATION_ID:xam}
+      user:
+        name: ${SAE_ESAFE_USER_NAME}
+        access-key: ${SAE_ESAFE_USER_ACCESS_KEY}
+  hybrid:
+    default-sae: ${SAE_HYBRID_DEFAULT_SAE:vitam}
+    tenant-mapping:
+      type: file
+      file:
+        path: ${SAE_HYBRID_TENANT_MAPPING_FILE_PATH:/app/data/sae-tenant-mapping.yml}
