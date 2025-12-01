@@ -1,0 +1,198 @@
+################################################################################
+# COMMON CONFIG (active for all profiles)
+################################################################################
+spring:
+  cloud:
+    consul:
+      enabled: ${CONSUL_ENABLED:true}
+      host: ${CONSUL_HOST:localhost}
+      discovery:
+        tags: cas-server, cas, external, xam
+        prefer-ip-address: true
+        ip-address: ${IP_INSTANCE}
+        instance-id: cas-server-${HOSTNAME}
+        scheme: https
+        health-check-url: http://${IP_INSTANCE}:${MANAGEMENT_PORT:5001}/actuator/health
+        health-check-tls-skip-verify: true
+    openfeign:
+      httpclient:
+        disable-ssl-validation: ${OPENFEIGN_HTTPCLIENT_DISABLE_SSL_VALIDATION:true}
+      client:
+        config:
+          default:
+            loggerLevel: ${OPENFEIGN_CLIENT_CONFIG_DEFAULT_LOGGER_LEVEL:basic}
+
+spring.application.name: ${SPRING_APPLICATION_NAME:cas-server}
+
+server:
+  ssl:
+    key-store: ${SERVER_SSL_KEY_STORE:/app/conf/cas_server/keystore_cas-server.jks}
+    key-store-password: ${SERVER_SSL_KEYSTORE_PASSWORD:jkspasswd}
+    key-password: ${SERVER_SSL_KEY_PASSWORD:${SERVER_SSL_KEYSTORE_PASSWORD:jkspasswd}}
+  host: ${SERVER_HOST:${IP_INSTANCE}}
+  port: ${SERVER_PORT:6001}
+  servlet.context-path: ${SERVER_SERVLET_CONTEXT_PATH:/cas}
+  servlet.session.cookie.path: ${SERVER_SERVLET_SESSION_COOKIE_PATH:/cas}
+  tomcat.basedir: ${SERVER_TOMCAT_BASEDIR:/app/conf/cas_server/tomcat}
+
+management:
+  endpoints:
+    enabled-by-default: ${MANAGEMENT_ENDPOINTS_ENABLED_BY_DEFAULT:true}
+    web:
+      exposure:
+        include: '${MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE:*}'
+  health:
+    memoryHealthIndicator:
+      enabled: ${MANAGEMENT_HEALTH_MEMORY_INDICATOR_ENABLED:false}
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      instance: ${IP_INSTANCE}
+      hostname: ${HOSTNAME}
+      environment: ${ENVIRONMENT}
+    export:
+      prometheus:
+        enabled: ${MANAGEMENT_METRICS_EXPORT_PROMETHEUS_ENABLED:true}
+  server:
+    port: ${MANAGEMENT_PORT:5001}
+    ssl:
+      enabled: ${MANAGEMENT_SERVER_SSL_ENABLED:false}
+
+vitamui.cas.tenant.identifier: ${VITAMUI_CAS_TENANT_IDENTIFIER:11}
+vitamui.cas.identity: ${VITAMUI_CAS_IDENTITY:cas}
+
+cas.authn.accept.users:
+
+cas.message-bundle.base-names: classpath:overriden_messages,classpath:messages
+
+cas.tgc.secure: ${CAS_TGC_SECURE:true}
+
+cas.tgc.crypto.enabled: ${CAS_TGC_CRYPTO_ENABLED:true}
+cas.tgc.crypto.encryption.key: ${CAS_TGC_CRYPTO_ENCRYPTION_KEY}
+cas.tgc.crypto.signing.key: ${CAS_TGC_CRYPTO_SIGNING_KEY}
+
+cas.webflow.crypto.enabled: ${CAS_WEBFLOW_CRYPTO_ENABLED:true}
+cas.webflow.crypto.encryption.key: ${CAS_WEBFLOW_CRYPTO_ENCRYPTION_KEY}
+cas.webflow.crypto.signing.key: ${CAS_WEBFLOW_CRYPTO_SIGNING_KEY}
+
+cas.authn.pm.reset.crypto.enabled: ${CAS_AUTHN_PM_RESET_CRYPTO_ENABLED:true}
+cas.authn.pm.reset.crypto.encryption.key: ${CAS_AUTHN_PM_RESET_CRYPTO_ENCRYPTION_KEY}
+cas.authn.pm.reset.crypto.signing.key: ${CAS_AUTHN_PM_RESET_CRYPTO_SIGNING_KEY}
+
+cas.authn.oauth.crypto.encryption.key: ${CAS_AUTHN_OAUTH_CRYPTO_ENCRYPTION_KEY}
+cas.authn.oauth.crypto.signing.key: ${CAS_AUTHN_OAUTH_CRYPTO_SIGNING_KEY}
+cas.authn.oauth.access-token.crypto.encryption.key: ${CAS_AUTHN_OAUTH_ACCESS_TOKEN_CRYPTO_ENCRYPTION_KEY}
+cas.authn.oauth.access-token.crypto.signing.key: ${CAS_AUTHN_OAUTH_ACCESS_TOKEN_CRYPTO_SIGNING_KEY}
+cas.authn.oauth.session-replication.cookie.crypto.signing.key: ${CAS_AUTHN_OAUTH_SESSION_REPLICATION_COOKIE_CRYPTO_SIGNING_KEY}
+cas.authn.pac4j.core.session-replication.cookie.crypto.encryption.key: ${CAS_AUTHN_PAC4J_CORE_SESSION_REPLICATION_COOKIE_CRYPTO_ENCRYPTION_KEY}
+cas.authn.pac4j.core.session-replication.cookie.crypto.signing.key: ${CAS_AUTHN_PAC4J_CORE_SESSION_REPLICATION_COOKIE_CRYPTO_SIGNING_KEY}
+cas.authn.passwordless.tokens.crypto.encryption.key: ${CAS_AUTHN_PASSWORDLESS_TOKENS_CRYPTO_ENCRYPTION_KEY}
+cas.authn.passwordless.tokens.crypto.signing.key: ${CAS_AUTHN_PASSWORDLESS_TOKENS_CRYPTO_SIGNING_KEY}
+
+cas.server.prefix: ${CAS_SERVER_PREFIX:https://cas-server.teamdlab.com}
+login.url: ${cas.server.prefix}/login
+
+cas.service-registry.mongo.client-uri: ${CAS_SERVICE_REGISTRY_MONGO_CLIENT_URI}
+cas.service-registry.mongo.collection: ${CAS_SERVICE_REGISTRY_MONGO_COLLECTION:services}
+cas.service-registry.mongo.user-id: ${CAS_SERVICE_REGISTRY_MONGO_USER_ID:cas}
+cas.service-registry.mongo.password: ${CAS_SERVICE_REGISTRY_MONGO_PASSWORD}
+
+cas.ticket.registry.mongo.client-uri: ${CAS_TICKET_REGISTRY_MONGO_CLIENT_URI}
+
+cas.authn.surrogate.separator: ${CAS_AUTHN_SURROGATE_SEPARATOR:,}
+cas.authn.surrogate.mail.attribute-name: ${CAS_AUTHN_SURROGATE_MAIL_ATTRIBUTE_NAME:fakeNameToBeSureToFindNoAttributeAndNeverSendAnEmail}
+
+cas.ticket.tst.time-to-kill-in-seconds: ${CAS_TICKET_TST_TIME_TO_KILL_IN_SECONDS:86400}
+
+cas.authn.pm.core.enabled: ${CAS_AUTHN_PM_CORE_ENABLED:true}
+cas.authn.pm.core.password-policy-pattern: ${CAS_AUTHN_PM_CORE_PASSWORD_POLICY_PATTERN}
+cas.authn.pm.reset.mail.subject: ${CAS_AUTHN_PM_RESET_MAIL_SUBJECT:Requete de reinitialisation de mot de passe}
+cas.authn.pm.reset.mail.text: ${CAS_AUTHN_PM_RESET_MAIL_TEXT:"Changez de mot de passe via le lien: %s"}
+cas.authn.pm.reset.mail.from: ${CAS_AUTHN_PM_RESET_MAIL_FROM:no-reply.dlab@xelians.fr}
+cas.authn.pm.reset.expiration: ${CAS_AUTHN_PM_RESET_EXPIRATION:PT1440M}
+cas.authn.pm.reset.number-of-uses: ${CAS_AUTHN_PM_RESET_NUMBER_OF_USES:2}
+cas.authn.pm.reset.mail.attribute-name: ${CAS_AUTHN_PM_RESET_MAIL_ATTRIBUTE_NAME:email}
+cas.authn.pm.reset.security-questions-enabled: ${CAS_AUTHN_PM_RESET_SECURITY_QUESTIONS_ENABLED:false}
+cas.authn.pm.reset.include-server-ip-address: ${CAS_AUTHN_PM_RESET_INCLUDE_SERVER_IP_ADDRESS:false}
+cas.authn.pm.reset.include-client-ip-address: ${CAS_AUTHN_PM_RESET_INCLUDE_CLIENT_IP_ADDRESS:false}
+cas.authn.pm.core.auto-login: ${CAS_AUTHN_PM_CORE_AUTO_LOGIN:true}
+
+spring.mail.host: ${SPRING_MAIL_HOST}
+spring.mail.port: ${SPRING_MAIL_PORT:25}
+spring.mail.protocol: ${SPRING_MAIL_PROTOCOL:smtp}
+spring.mail.username: ${SPRING_MAIL_USERNAME}
+spring.mail.password: ${SPRING_MAIL_PASSWORD}
+spring.mail.mail-from: ${SPRING_MAIL_MAIL_FROM:no-reply.dlab@xelians.fr}
+spring.mail.testConnection: ${SPRING_MAIL_TEST_CONNECTION:false}
+spring.mail.properties.mail.smtp.auth: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_AUTH:false}
+spring.mail.properties.mail.smtp.starttls.enable: ${SPRING_MAIL_PROPERTIES_MAIL_SMTP_STARTTLS_ENABLE:false}
+spring.mail.properties.mail.transport.protocol: ${SPRING_MAIL_PROPERTIES_MAIL_TRANSPORT_PROTOCOL:smtp}
+
+cas.authn.throttle.failure.threshold: ${CAS_AUTHN_THROTTLE_FAILURE_THRESHOLD:2}
+cas.authn.throttle.failure.range-seconds: ${CAS_AUTHN_THROTTLE_FAILURE_RANGE_SECONDS:3}
+
+cas:
+  logout:
+    follow-service-redirects: ${CAS_LOGOUT_FOLLOW_SERVICE_REDIRECTS:true}
+    redirect-parameter: ${CAS_REDIRECT_PARAMETER:next}
+
+cas.monitor.endpoints.endpoint.defaults.access[0]: ${CAS_MONITOR_ENDPOINTS_ENDPOINT_DEFAULTS_ACCESS:PERMIT}
+
+vitamui.portal.url: ${VITAMUI_PORTAL_URL:https://cas-server.teamdlab.com}
+
+token.api.cas: ${TOKEN_API_CAS:cas_changeme}
+
+ip.header: ${IP_HEADER:X-Real-IP}
+cas.audit.engine.alternate-client-addr-header-name: ${CAS_AUDIT_ENGINE_ALTERNATE_CLIENT_ADDR_HEADER_NAME:X-Forwarded-For}
+
+cas.authn.oauth.access-token.max-time-to-live-in-seconds: ${CAS_AUTHN_OAUTH_ACCESS_TOKEN_MAX_TTL_SECONDS:28800}
+
+cas.authn.oidc.core.issuer: ${CAS_AUTHN_OIDC_CORE_ISSUER:${cas.server.prefix}/oidc}
+cas.authn.oidc.jwks.file-system.jwks-file: ${CAS_AUTHN_OIDC_JWKS_FILE_SYSTEM_JWKS_FILE:file:/app/conf/cas_server/oidc_keystore.jwks}
+
+theme:
+  vitamui-platform-name: ${THEME_VITAMUI_PLATFORM_NAME:X-AM}
+  vitamui-favicon: ${THEME_VITAMUI_FAVICON:/app/conf/assets/favicon.ico}
+  vitam-logo: ${THEME_VITAM_LOGO:/app/conf/assets/locarchives-logo.png}
+  vitamui-logo-large: ${THEME_VITAMUI_LOGO_LARGE:/app/conf/assets/logo-large.png}
+  primary: ${THEME_PRIMARY:'#093DC5'}
+  secondary: ${THEME_SECONDARY:'#0EBCFF'}
+  background: ${THEME_BACKGROUND:'#F5F7FC'}
+
+################################################################################
+# kubernetes profile
+################################################################################
+---
+
+spring.config.activate.on-profile: kubernetes
+spring:
+  cloud:
+    kubernetes:
+      enabled: true
+      config:
+        enabled: false
+      reload:
+        enabled: false
+    consul:
+      enabled: false
+
+################################################################################
+# opentelemetry profile
+################################################################################
+---
+
+spring.config.activate.on-profile: opentelemetry
+management:
+  opentelemetry:
+    resource-attributes:
+      deployment.environment: ${ENVIRONMENT}
+  otlp:
+    tracing:
+      endpoint: ${TRACING_OTLP_COLLECTOR_ENDPOINT}
+      export:
+        enabled: ${TRACING_ENABLED:true}
+  tracing:
+    enabled: ${MANAGEMENT_TRACING_ENABLED:true}
+  zipkin:
+    tracing:
+      endpoint: ${ZIPKIN_TRACING_ENDPOINT:http://localhost:9411/api/v2/spans}
