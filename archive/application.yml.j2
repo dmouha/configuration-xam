@@ -1,0 +1,259 @@
+spring:
+  cloud:
+    consul:
+      enabled: {{ consul.enabled | bool | lower }}
+      host: {{ consul.host }}
+      discovery:
+        tags: archive-internal, api, internal, xam
+        preferIpAddress: {{ consul.prefer_ip_address | bool | lower }}
+        ipAddress: {{ ip_service }}
+        instance-id: archive-internal-{{ inventory_hostname }}
+        scheme: https
+        health-check-url: {{ 'https' if archive_internal.management_server_ssl_enabled else 'http' }}://{{ ip_service }}:{{ archive_internal.management_server_port }}/actuator/health
+        health-check-tls-skip-verify: true
+    openfeign:
+      httpclient:
+        disable-ssl-validation: {{ openfeign.http_client.disable_ssl_validation | default('true') }}
+      client:
+        config:
+          default:
+            loggerLevel: {{ openfeign.client.config.default.logger_level | default('basic') }}
+  data:
+    mongodb:
+      uri: "mongodb://{{ mongodb.archive.user }}:{{ mongodb.archive.password }}@{{ mongodb.hosts }}/{{mongodb.archive.db}}?connectTimeoutMS={{mongod_client_connect_timeout_ms}}"
+  mail:
+    test-connection: false
+    host: {{ smtp.host }}
+    port: {{ smtp.port }}
+    username: {{ smtp.username }}
+    password: {{ smtp.password }}
+    mail-from: {{ smtp.mail_from }}
+    properties:
+      mail:
+        smtp:
+          auth: {{ smtp.auth }}
+          starttls:
+            enable: {{ smtp.enable_starttls | bool | lower }}
+  servlet:
+      multipart:
+        enabled: true
+        resolve-lazily: true
+        max-file-size: {{ archive_internal.servlet_multipart_max_file_size }}
+        max-request-size: {{ archive_internal.servlet_multipart_max_request_size }}
+{% if sae is defined and (sae.type == 'esafe' or sae.type == 'hybrid') %}
+  security:
+    oauth2:
+      client:
+        provider:
+          esafe:
+            authorization-uri: {{ sae.esafe.url }}/oauth2/authorize
+            token-uri: {{ sae.esafe.url }}/oauth2/token
+            user-info-uri: {{ sae.esafe.url }}/userinfo
+            jwk-set-uri: {{ sae.esafe.url }}/oauth2/jwks
+        registration:
+          xam:
+            client-id: {{ sae.esafe.security.oauth2.client.client_id }}
+            client-secret: {{ sae.esafe.security.oauth2.client.client_secret }}
+            client-authentication-method: client_secret_post
+            authorization-grant-type: access_key          
+            scope: openid
+            provider: esafe
+
+sae:
+  type: {{ sae.type }}
+  esafe:
+    organization:
+      id-strategy: {{ sae.esafe.organization.id_strategy | default('SEQUENCE') }}
+    url: {{ sae.esafe.url }}
+    loggerLevel: {{ sae.esafe.logger_level | default('basic') }}
+    security:
+      oauth2:
+        client:
+          registration-id: {{ sae.esafe.security.oauth2.client.registration_id }}
+      user:
+        name: {{ sae.esafe.security.user.name }}
+        access-key: {{ sae.esafe.security.user.access_key }}
+  hybrid:
+    default-sae: {{ sae.hybrid.default | default('vitam') }}
+    tenant-mapping:
+      type: file
+      file:
+        path: {{sae.hybrid.tenant_mapping.file.path}}
+
+{% endif %}
+
+logging:
+  file:
+    name: {{ springboot_root_path }}/{{ springboot_log_dir }}/{{ springboot_name }}/{{ springboot_name }}.json.log
+  level:
+    fr.locarchives.dlab: {{ logging.level | default('INFO') }}
+
+server:
+  forward-headers-strategy: framework
+  port: {{ archive_internal.server_port }}
+  ssl:
+    key-store: "{{ springboot_root_path }}/{{ springboot_conf_dir }}/{{ springboot_name }}/{{ archive_internal.server_ssl_keystore_filename }}"
+    key-store-password: "{{ archive_internal.server_ssl_keystore_password }}"
+    key-password: "{{ archive_internal.server_ssl_key_password }}"
+  max-http-request-header-size: {{ archive_internal.server_max_http_header_size }}
+  tomcat:
+    accesslog:
+        enabled: "{{ archive_internal.server_tomcat_enabled | bool | lower }}"
+        directory: "{{ springboot_root_path }}/{{ springboot_log_dir }}/{{ springboot_name }}/"
+
+management:
+{% if tracing.enabled  is sameas true %}
+  opentelemetry:
+    resource-attributes:
+      deployment.environment: {{ current_env }}
+  otlp:
+    tracing:
+      endpoint: {{ tracing.otp_collector_endpoint | default('127.0.0.1') }}
+      export:
+        enabled: {{ tracing.enabled | default(false)  }}
+{% endif %}
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      instance: {{ hostvars[inventory_hostname]['ip_service'] }}
+      hostname: {{ ansible_hostname }}
+      environment: {{ current_env }}
+  server:
+    port: {{ archive_internal.management_server_port }}
+    ssl:
+      enabled: {{ archive_internal.management_server_ssl_enabled | bool | lower }}
+
+
+token.api.iam: {{ archive_internal.token_api }}
+
+fulltext.maximum.length: {{ fulltext_maximum_length }}
+fulltext.maximum.file.size: {{ fulltext_maximum_file_size }}
+
+basket-params:
+  maxBasketsPerUser: {{ basket_params.maxBasketsPerUser }}
+  maxItemsPerBasket: {{ basket_params.maxItemsPerBasket }}
+
+system-tenant-identifier: {{ dlab_platform_informations.proof_tenant }}
+
+ui-archive:
+  url: {{ ui_archive.base_url }}
+  archive-app-path: {{ applications.archive_app_path }}
+
+portal:
+  url: "{{ ui_portal.base_url }}"
+
+scheduler:
+  numbering-order-reset:
+    cron-expression: {{ scheduler.numbering_order_reset_cron_expression }}
+  item-consultation:
+    cron-expression: {{ mailing.item_consultation_cron_expression }}
+    day-interval-threshold: {{ mailing.day_interval_threshold }}
+  basket-expiration:
+    cron-expression: {{ scheduler.nightly_cron_expression }}
+    month-interval-expiration: {{ basket.month_interval_expiration }}
+  operation:
+    timeoutJob:
+      cronExpression: 0 0 * ? * *
+    obsolete:
+      cronExpression: {{ scheduler.nightly_cron_expression }}
+    retention-period: # in hours
+      terminated: {{ scheduler.terminated_operation_retention_period | default('1') | int }}
+      failed: {{ scheduler.failed_operation_retention_period | default('48') | int }}
+display-extract-form:
+  extract-forms:
+    - type: {{ extract_forms.type}}
+      first-field: {{ extract_forms.first_field}}
+      second-field: {{ extract_forms.second_field}}
+      length: {{ extract_forms.length}}
+      mandatory: {{ extract_forms.mandatory}}
+      number-only: {{ extract_forms.number_only}}
+
+integrity-attestation:
+  instance-operator-logo: {{ integrity_attestation.instance_operator_logo }}
+  instance-operator: "{{ integrity_attestation.instance_operator }}"
+  product-name: "{{ integrity_attestation.product_name }}"
+  logo-nf: {{ integrity_attestation.logo_nf }}
+  social-reason-1: "{{ integrity_attestation.social_reason_1 }}"
+  social-reason-2: "{{ integrity_attestation.social_reason_2 }}"
+
+folders:
+  assets: "{{ dlab_assets }}"
+
+holding.position:
+  max-virtual-unit-nodes-levels: {{ holding.position_virtual_nodes_levels }}
+
+workspace:
+  operationPath: "{{ springboot_root_path }}/{{ springboot_data_dir }}/{{ springboot_name }}/workspace/operations"
+  tempPath: "{{ springboot_root_path }}/{{ springboot_data_dir }}/{{ springboot_name }}/workspace/tmp"
+
+common.asyncTasks:
+  timeout: {{ common_asyncTasks.timeout }}
+  delay: {{ common_asyncTasks.delay }}
+  poolSize: {{ common_asyncTasks.poolSize }}
+  awaitTerminationSeconds: {{ common_asyncTasks.awaitTerminationSeconds }}
+  waitForTasksToCompleteOnShutdown: {{ common_asyncTasks.waitForTasksToCompleteOnShutdown | bool | lower }}
+
+vitam-async-task:
+  ingest-timeout: {{ vitam_async_task.unitary_ingest_timeout }} # in minutes
+  export-timeout: {{ vitam_async_task.export_timeout }} # in minutes
+
+#  Will set first host as primary and the rest will be disabled
+{% if inventory_hostname != groups['archive_internal']|first%}
+# By default is true
+instance:
+  primary: false
+{% endif %}
+
+logbook:
+  scheduling:
+    enabled: {{ archive_internal.logbook_scheduling_enabled  }}
+    sendEventToVitamTasks:
+      delay: {{ archive_internal.logbook_scheduling_delay }}
+
+barcode:
+  client: {{ barcode.client }}
+  config:
+    pageWidth: {{ barcode.config_pageWidth }}
+    pageHeight: {{ barcode.config_pageHeight }}
+    leftMargin: {{ barcode.config_leftMargin }}
+    rightMargin: {{ barcode.config_rightMargin }}
+    topMargin: {{ barcode.config_topMargin }}
+    bottomMargin: {{ barcode.config_bottomMargin }}
+    verticalGap: {{ barcode.config_verticalGap }}
+    horizontalGap: {{ barcode.config_horizontalGap }}
+    barcodeType: {{ barcode.config_barcodeType }}
+    barcodeWidth: {{ barcode.config_barcodeWidth }}
+    barcodeHeight: {{ barcode.config_barcodeHeight }}
+    labelFontSize: {{ barcode.config_labelFontSize }}
+    codeFontSize: {{ barcode.config_codeFontSize }}
+    printCode: {{ barcode.config_printCode }}
+    printBox: {{ barcode.config_printBox }}
+    horizontalPrints: {{ barcode.config_horizontalPrints }}
+    verticalPrints: {{ barcode.config_verticalPrints }}
+
+archive.item.maximum.size: {{ archive_unitary_ingest_max_size }}
+
+originating-referential:
+  import:
+    text-fields:
+      max-long-text-length: {{ import.max_long_text_length }}
+      max-small-text-length: {{ import.max_small_text_length }}
+
+temp.directory.path: /tmp
+
+springdoc:
+  app:
+    openIdConnectUrl: {{ cas_server.cas_server_prefix }}/oidc/.well-known/openid-configuration
+  swagger-ui:
+    oauth:
+      client-id: archive-swagger
+    enabled: {{swagger_enabled | default(false)}}
+
+app:
+  gateway:
+    iam:
+      name: iam-internal
+    flow:
+      name: flow-internal
+    logistic:
+      name: logistic-internal

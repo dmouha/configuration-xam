@@ -1,0 +1,274 @@
+spring:
+  cloud:
+    consul:
+      enabled: true
+      host: localhost
+      discovery:
+        preferIpAddress: true
+        ipAddress: 172.16.24.128
+        tags: cas-server, cas, external, xam
+        instance-id: cas-server-dev-env
+        scheme: https
+        health-check-url: http://172.16.24.128:5001/actuator/health
+        health-check-tls-skip-verify: true
+    openfeign:
+      httpclient:
+        disable-ssl-validation: true
+      client:
+        config:
+          default:
+            loggerLevel: basic
+spring.application.name: cas-server
+
+
+server:
+  ssl:
+    key-store: /xelians-apps/conf/cas_server/keystore_cas-server.jks
+    key-store-password: changeme
+    key-password: changeme
+  host: 172.16.24.128
+  port: 6001
+  servlet.context-path: /cas
+  servlet.session.cookie.path: /cas
+  tomcat.basedir: /xelians-apps/conf/cas_server/tomcat
+
+
+management:
+  endpoints:
+    enabled-by-default: true
+    web:
+      exposure:
+        include: '*'
+  health:
+    memoryHealthIndicator:
+      enabled: false
+  tracing:
+    enabled: True
+  opentelemetry:
+    resource-attributes:
+      deployment.environment: rabbit
+  otlp:
+    tracing:
+      endpoint: http://tracing.xelians-dev.fr:4318/v1/traces
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      instance: 172.16.24.128
+      hostname: rabbit-xam
+      environment: rabbit
+    export:
+      prometheus:
+        enabled: true
+  server:
+    port: 5001
+    ssl:
+      enabled: false
+
+
+vitamui.cas.tenant.identifier: 11
+vitamui.cas.identity: cas
+
+cas.authn.accept.users:
+
+
+cas.message-bundle.base-names: classpath:overriden_messages,classpath:messages
+
+
+cas.tgc.secure: true
+
+cas.tgc.crypto.enabled: true
+cas.tgc.crypto.encryption.key: 8gFOzerI9DZqnomj5ZB6_eYHSWBSLBaD0v0q9rtx4d4
+cas.tgc.crypto.signing.key: ZySzTxhJBZA3mkHtbvPWnYAI0Dw-wDyiOeiDI7f_UnjnVRPGjnrDy06S8pjBA25CNQueekjnZHivM2S4VkPgQg
+
+cas.webflow.crypto.enabled: true
+cas.webflow.crypto.encryption.key: P08MN-UDObp7o163WRKbJQ
+cas.webflow.crypto.signing.key: pV5GGTJ2b_ZipPpQH4uOYhAtfsnIfP3cPGGIix-ppHbHVwrvqwXq7uAR7-dZl4hoKfKwlfBnErhikDg0TEPQqw
+
+
+cas.authn.pm.reset.crypto.enabled: true
+cas.authn.pm.reset.crypto.encryption.key: 0jSATBzlOeJg9sje1xeUVW844WqeZXxrahiH8icFaBg
+cas.authn.pm.reset.crypto.signing.key: PF1aj55cVcPdscLvDPK2o4S20RNNfwuNt_JMTRPwW80EwQHZ08Ie9_l5iT8T7dq6YIjT5g6MGTmQaj5zVDRrFQ
+
+cas.authn.oauth.crypto.encryption.key: WN_aoKWcdC1ZEEY7OCJ8Xb0PziiEX3Ql14mSUGiZP70
+cas.authn.oauth.crypto.signing.key: _YKlQ099iIVBvke9DLF1SIReH5UWjWXz-pJCs2UOH043AcwzXn5SZmBGwK9VOl0m3ReldATr9VQ4cLM2-lMciA
+cas.authn.oauth.access-token.crypto.encryption.key: CemyWNZGUdSmgU2GUXhgv6-XNh1kY9dUbHs-lGc1_-0
+cas.authn.oauth.access-token.crypto.signing.key: 80nh1qOiQDbQ4a7FrvO2CELBJ0Rm1VOuE7HATWOGcYZIcfflNkTX7DAe-SFcLneFO1LB_ZjPUJ84vwwSHJ6wwA
+cas.authn.oauth.session-replication.cookie.crypto.signing.key: RcDjFxciiRRtwyIt+y0aPKUot25D+qfgastGjFMdrhD0QrdNtRZEhF3U8jsyV0gDQblwaVO5TN1SJoGEZ3RvMQ
+cas.authn.pac4j.core.session-replication.cookie.crypto.encryption.key: RGG0/8XvAQKHl+XQ+mqT6WGQIqv2bkuxPlJ2QkR0qzP
+cas.authn.pac4j.core.session-replication.cookie.crypto.signing.key: cLrc+uxctAk6CCnjThipQxHD2ndgy5IKetkX5/WtHj/kCe1u1Xkm3h57REhyBS6oFM7IHFlUaAwbsKso/G+SVw
+cas.authn.passwordless.tokens.crypto.encryption.key: J9LVFAnOq0IZu9ROmsjKFoo8YkfqnnqnYpWXLd6ptOD
+cas.authn.passwordless.tokens.crypto.signing.key: 7LXXCQJRrLnu4bUc23G0TSgicaK4VyAhxJByzHiteT8+PoOb9zFzQMeoACL1Am3lUlYTvwx/baFaWzF1Girq6g
+
+
+##
+# CAS Web Application Session Configuration
+#
+# 4 (hours) * 60 (minutes) * 60 (seconds)
+#server.servlet.session.timeout: PT14400S
+#cas.ticket.tgt.hardTimeout.timeToKillInSeconds: 14400
+
+
+cas.server.prefix: https://rabbit.xelians-dev.fr/cas
+login.url: ${cas.server.prefix}/login
+
+cas.service-registry.mongo.client-uri: "mongodb://cas:cas@172.16.24.128:27019/cas?connectTimeoutMS=2000"
+cas.service-registry.mongo.collection: services
+cas.service-registry.mongo.user-id: cas
+cas.service-registry.mongo.password: cas
+
+
+cas.ticket.registry.mongo.client-uri: "mongodb://cas:cas@172.16.24.128:27019/cas?connectTimeoutMS=2000"
+
+
+cas.authn.surrogate.separator: ","
+cas.authn.surrogate.mail.attribute-name: fakeNameToBeSureToFindNoAttributeAndNeverSendAnEmail
+
+# 24 hours cache for login delegation
+cas.ticket.tst.time-to-kill-in-seconds: 86400
+
+cas.authn.pm.core.enabled: true
+
+cas.authn.pm.core.password-policy-pattern: '(^(?=(?:.*[a-z]){2,})(?=(?:.*[A-Z]){2,})(?=(?:.*[\d]){2,})[A-Za-zÀ-ÿ0-9$@!%*#£?&=\-\/:;\(\)"\.,\?!''\[\]{}^\+\=_\\\|~<>`]{${password.length},}$)|(^(?=(.*[$@!%*#£?&=\-\/:;\(\)"\.,\?!''\[\]{}^\+\=_\\\|~<>`]){2,})(?=(?:.*[A-Z]){2,})(?=(?:.*[\d]){2,})[A-Za-zÀ-ÿ0-9$@!%*#£?&=\-\/:;\(\)"\.,\?!''\[\]{}^\+\=_\\\|~<>`]{${password.length},}$)|(^(?=(.*[$@!%*#£?&=\-\/:;\(\)"\.,\?!''\[\]{}^\+\=_\\\|~<>`]){2,})(?=(?:.*[a-z]){2,})(?=(?:.*[\d]){2,})[A-Za-zÀ-ÿ0-9$@!%*#£?&=\-\/:;\(\)"\.,\?!''\[\]{}^\+\=_\\\|~<>`]{${password.length},}$)|(^(?=(.*[$@!%*#£?&=\-\/:;\(\)"\.,\?!''\[\]{}^\+\=_\\\|~<>`]){2,})(?=(?:.*[a-z]){2,})(?=(?:.*[A-Z]){2,})[A-Za-zÀ-ÿ0-9$@!%*#£?&=\-\/:;\(\)"\.,\?!''\[\]{}^\+\=_\\\|~<>`]{${password.length},}$)'
+
+cas.authn.pm.reset.mail.subject: Requete de reinitialisation de mot de passe
+cas.authn.pm.reset.mail.text: "Changez de mot de passe via le lien: %s"
+cas.authn.pm.reset.mail.from: no-reply.dlab@xelians.fr
+cas.authn.pm.reset.expiration: "PT1440M"
+cas.authn.pm.reset.number-of-uses: 2
+cas.authn.pm.reset.mail.attribute-name: email
+cas.authn.pm.reset.security-questions-enabled: false
+cas.authn.pm.reset.include-server-ip-address: false
+cas.authn.pm.reset.include-client-ip-address: false
+cas.authn.pm.core.auto-login: true
+
+# Used to sign/encrypt the password-reset link
+# cas.authn.pm.reset.crypto.encryption.key:
+# cas.authn.pm.reset.crypto.signing.key:
+# cas.authn.pm.reset.crypto.enabled: true
+
+spring.mail.host: smtp-xam-int.xelians-dev.fr
+spring.mail.port: 2525
+spring.mail.protocol: smtp
+spring.mail.username: no-reply.rabbit.dlab@xelians.fr
+spring.mail.password: 
+spring.mail.mail-from: no-reply-rabbit.dlab@xelians.fr
+spring.mail.testConnection: false
+spring.mail.properties.mail.smtp.auth: false
+spring.mail.properties.mail.smtp.starttls.enable: false
+spring.mail.properties.mail.transport.protocol: smtp
+
+
+cas.authn.throttle.failure.threshold: 2
+cas.authn.throttle.failure.range-seconds: 3
+
+
+cas:
+  logout:
+    follow-service-redirects: true
+    redirect-parameter: next
+
+cas.monitor.endpoints.endpoint.defaults.access[0]: PERMIT
+
+
+
+vitamui.portal.url: https://rabbit.xelians-dev.fr
+
+token.api.cas: tokcas_ie6UZsEcHIWrfv2x
+
+
+#Audit/IP
+ip.header: X-Real-IP
+cas.audit.engine.alternate-client-addr-header-name: X-Forwarded-For
+
+# 8 hours in seconds
+cas.authn.oauth.access-token.max-time-to-live-in-seconds: 28800
+
+cas.authn.oidc.core.issuer: ${cas.server.prefix}/oidc
+cas.authn.oidc.jwks.file-system.jwks-file: file:/xelians-apps/conf/cas_server/oidc_keystore.jwks
+
+# Example to override theme colors, logo, favicon, platform name ...
+theme:
+  vitamui-platform-name: X-AM
+  vitamui-favicon: /xelians-apps/conf/assets/favicon.ico
+  vitam-logo: /xelians-apps/conf/assets/locarchives-logo.png
+  vitamui-logo-large: /xelians-apps/conf/assets/logo-large.png
+  primary: '#093DC5'
+  secondary: '#0EBCFF'
+  background: '#F5F7FC'
+
+
+logging:
+  file:
+    path: /xelians-apps/logs/cas_server
+    name: cas_server
+  audit:
+    enabled:
+      False
+  level:
+    org.reflections.Reflections: ERROR
+    org.apereo.cas.web.CasWebApplication: INFO
+    org.springframework.boot.autoconfigure.security: INFO
+    org.jasig.cas.client: INFO
+    org.apereo: INFO
+    org.springframework.cloud: INFO
+    org.springframework.amqp: OFF
+    org.springframework.context.annotation: OFF
+    org.springframework.boot.devtools: OFF
+    org.apereo.cas.web.flow: INFO
+    org.apereo.inspektr.audit.support: OFF
+    fr.gouv.vitamui.cas: DEBUG
+    org.elasticsearch.metrics: DEBUG
+    fr.gouv.vitamui.commons: DEBUG
+
+# Cas CORS (necessary for mobile app)
+cas.http-web-request.cors.enabled: true
+cas.http-web-request.cors.allow-credentials: true
+cas.http-web-request.cors.allow-origins: ["https://rabbit.xelians-dev.fr", "https://dev.xelians-dev.fr", "https://dev.vitamui.com:4200", "https://dev.vitamui.com:4201", "https://dev.vitamui.com:4202", "https://localhost:4202", "https://localhost:4203", "https://localhost:4204", "https://localhost:4205", "https://localhost:4206", "http://localhost", "https://keycloak.xelians-dev.fr", "https://localhost:7083", "https://localhost:7087", "https://localhost:7086", "https://localhost:7088", "https://localhost:8085", "https://localhost"]
+cas.http-web-request.cors.allow-methods: ["*"]
+cas.http-web-request.cors.allow-headers: ["*"]
+cas.http-web-request.cors.allow-origin-patterns: []
+
+# Password configuration
+password:
+  length: 12
+  max-old-password: 12
+  check-occurrence: true
+  occurrences-chars-number: 3 # should be >=3
+  profile: "anssi"
+  constraints:
+    defaults:
+      fr:
+          messages:
+            - Avoir une taille d'au moins ${password.length} caractères
+          special-chars:
+               title: "Contenir au moins 2 caractères issus de chaque catégorie, pour au moins 3 des catégories suivantes:"
+               messages:
+                  - Minuscules (a-z)
+                  - Majuscules (A-Z)
+                  - Numériques (0-9)
+                  - Caractères spéciaux (!"#$%&£'()*+,-./:;<=>?@[]^_`{|}~)
+      en:
+          messages:
+            - Have a size of at least ${password.length} characters
+          special-chars:
+               title: "Contain at least 2 characters from each category, for at least 3 of the following categories:"
+               messages:
+                  - Uppercases (a-z)
+                  - Lowercases (A-Z)
+                  - Digital (0-9)
+                  - Special Characters (!"#$%&£'()*+,-./:;<=>?@[]^_`{|}~)
+      de:
+          messages:
+            - Mindestens ${password.length} Zeichen lang sein
+          special-chars:
+               title: "Mindestens 2 Zeichen aus jeder Kategorie enthalten, für mindestens 3 der folgenden Kategorien:"
+               messages:
+                  - Großbuchstaben (a-z)
+                  - Kleinbuchstaben (A-Z)
+                  - Digital (0-9)
+                  - Spezielle Charaktere (!"#$%&£'()*+,-./:;<=>?@[]^_`{|}~)
+
+app:
+  gateway:
+    iam:
+      name: iam-internal

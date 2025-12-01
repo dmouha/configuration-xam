@@ -1,0 +1,131 @@
+spring:
+  cloud:
+    consul:
+      enabled: true
+      host: localhost
+      discovery:
+        ipAddress: 172.16.24.39
+        tags: logistic-internal, api, internal, xam
+        preferIpAddress: true
+        instance-id: logistic-internal-dev-env
+        scheme: https
+        health-check-url: http://172.16.24.39:5015/actuator/health
+        health-check-tls-skip-verify: true
+    openfeign:
+      httpclient:
+        disable-ssl-validation: true
+      client:
+        config:
+          default:
+            loggerLevel: basic
+  datasource:
+    url: jdbc:postgresql://172.16.24.39:5432/logistic
+    username: "logistic"
+    password: "p@s79res"
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        default_schema: public
+        jdbc:
+          lob:
+            non_contextual_creation: true
+  liquibase:
+    default-schema: ${spring.jpa.properties.hibernate.default_schema}
+    drop-first: False
+    change-log: classpath:db/changelog-master.yml
+    contexts: demo
+  servlet:
+    multipart:
+      max-file-size: 1024MB
+      max-request-size: 1024MB
+logging:
+  file:
+    name: /xelians-apps/logs/logistic_internal/logistic_internal.json.log
+  level:
+    fr.locarchives.dlab: DEBUG
+
+server:
+  forward-headers-strategy: framework
+  port: 6015
+  ssl:
+    key-store: "/xelians-apps/conf/logistic_internal/keystore_logistic-internal.jks"
+    key-store-password: changeme
+    key-password: changeme
+  max-http-request-header-size: 10KB
+  tomcat:
+    accesslog:
+        enabled: false
+        directory: "/xelians-apps/logs/logistic_internal/"
+
+management:
+  opentelemetry:
+    resource-attributes:
+      deployment.environment: crocodile
+  otlp:
+    tracing:
+      endpoint: http://tracing.xelians-dev.fr:4318/v1/traces
+      export:
+        enabled: True
+  tracing:
+    enabled: True
+  zipkin:
+    tracing:
+      endpoint: http://172.16.24.39:9411/api/v2/spans
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      instance: 172.16.24.39
+      hostname: crocodile-xam
+      environment: crocodile
+  server:
+    port: 5015
+    ssl:
+      enabled: false
+
+security:
+ system:
+   identity: api-logistic-internal
+   applicationId: api-logistic-internal
+   token: tokapiflow_x2wiZu3B5grvDfVH
+   userId: apiflowuser
+
+barcode:
+  config:
+    pageWidth: 210 mm
+    pageHeight: 297 mm
+    leftMargin: 0 mm
+    rightMargin: 0 mm
+    topMargin: 0 mm
+    bottomMargin: 0 mm
+    verticalGap: 0 mm
+    horizontalGap: 0 mm
+    barcodeType: CODE_128
+    barcodeWidth: 70 mm
+    barcodeHeight: 25 mm
+    labelFontSize: 13F
+    codeFontSize: 10F
+    printCode: True
+    printBox: True
+    horizontalPrints: 2
+    verticalPrints: 4
+
+workspace:
+  tempPath: "/xelians-apps/data/logistic_internal/workspace/tmp"
+
+springdoc:
+  app:
+    openIdConnectUrl: https://crocodile.xelians-dev.fr/cas/oidc/.well-known/openid-configuration
+  swagger-ui:
+    oauth:
+      client-id: logistic-swagger
+    enabled: True
+
+app:
+  gateway:
+    iam:
+      name: iam-internal
+    archive:
+      name: archive-internal

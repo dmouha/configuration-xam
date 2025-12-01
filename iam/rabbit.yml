@@ -1,0 +1,184 @@
+spring:
+  cloud:
+    consul:
+      enabled: true
+      host: localhost
+      discovery:
+        preferIpAddress: true
+        ipAddress: 172.16.24.128
+        tags: iam-internal, api, internal, xam
+        instance-id: iam-internal-dev-env
+        scheme: https
+        health-check-url: http://172.16.24.128:5003/actuator/health
+        health-check-tls-skip-verify: true
+    openfeign:
+      httpclient:
+        disable-ssl-validation: true
+      client:
+        config:
+          default:
+            loggerLevel: basic
+  data:
+    mongodb:
+      uri: "mongodb://api-iam:api-iam@172.16.24.128:27019/iam?connectTimeoutMS=2000"
+  mail:
+    test-connection: false
+    host: smtp-xam-int.xelians-dev.fr
+    port: 2525
+    username: no-reply.rabbit.dlab@xelians.fr
+    password: 
+    mail-from: no-reply-rabbit.dlab@xelians.fr
+    properties:
+      mail:
+        smtp:
+          auth: False
+          starttls:
+            enable: false
+
+sae:
+  type: hybrid
+  esafe:
+    organization:
+      id-strategy: RANDOM
+    url: https://esafe-integration.xelians-dev.fr
+    loggerLevel: FULL
+    security:
+      user:
+        username: root
+        api-key: xxxx
+  hybrid:
+    default-sae: vitam
+    tenant-mapping:
+      type: file
+      file:
+        path: /xelians-apps/data/iam_internal/tenant.json
+  vitam:
+    tenants: 149-159,301-320
+
+
+
+logging:
+  file:
+    name: /xelians-apps/logs/iam_internal/iam_internal.json.log
+  level:
+    fr.gouv.vitamui: DEBUG
+    fr.gouv.vitamui.iam.internal.server: DEBUG
+
+server:
+  forward-headers-strategy: framework
+  port: 6003
+  ssl:
+    key-store: /xelians-apps/conf/iam_internal/keystore_iam-internal.jks
+    key-store-password: changeme
+    key-password: changeme
+  max-http-request-header-size: 10KB
+  tomcat:
+    accesslog:
+      enabled: "false"
+      directory: "/xelians-apps/logs/iam_internal/"
+
+gdpr_alert_readonly: True
+
+management:
+  opentelemetry:
+    resource-attributes:
+      deployment.environment: rabbit
+  otlp:
+    tracing:
+      endpoint: http://tracing.xelians-dev.fr:4318/v1/traces
+      export:
+        enabled: True
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      instance: 172.16.24.128
+      hostname: rabbit-xam
+      environment: rabbit
+  server:
+    port: 5003
+    ssl:
+      enabled: false
+
+login:
+  url: https://rabbit.xelians-dev.fr/cas/login
+
+theme:
+  vitamui-platform-name: X-AM
+
+provisioning-client:
+  token-api-user-provisioning: "tokUserprov_ie6UZsEcHIWrfv2xh7Fp9Ce7"
+  identity-providers:
+    - idp-identifier: client1
+      uri: "https://client1:8090/provisioning/v1/users"
+      client:
+        secure: true
+        ssl-configuration:
+          keystore:
+            key-path: /xelians-apps/conf/iam_internal/keystore_provisioning_users.jks
+            key-password: changeme
+            type: JKS
+          truststore:
+            key-path: /xelians-apps/conf/iam_internal/keystore_provisioning_users.jks
+            key-password: changeme
+            type: JKS
+          hostname-verification: false
+    - idp-identifier: 64b5329cf135645dabf1fdaaed3ac1ea49a444faa925f7760f483920cd379564
+      uri: "https://provisioning-users.service.consul:8601/provisioning/v1/users"
+      client:
+        secure: true
+        ssl-configuration:
+          keystore:
+            key-path: /xelians-apps/conf/iam_internal/keystore_iam-internal.jks
+            key-password: changeme
+            type: JKS
+          truststore:
+            key-path: /xelians-apps/conf/iam_internal/truststore_server.jks
+            key-password: changeme
+            type: JKS
+          hostname-verification: false
+
+login.attempts.maximum.failures: 5
+login.attempts.time.interval: 20
+
+vitam.tenant.init.mandatory: true # true/false, see with Romain for further info ... later...
+
+#  Will set first host as primary and the rest will be disabled
+
+logbook:
+  scheduling:
+    enabled: True
+    sendEventToVitamTasks:
+      delay: 60000
+
+customer.init.config.file: /xelians-apps/conf/iam_internal/customer-init.yml
+
+user.connection.tracing.enabled: True
+
+address:
+  max-street-length: 250
+
+# Password configuration
+password:
+  max-old-password: 12
+
+# User Token/Subrogation TTL
+token.ttl: 60
+token.additional.ttl: 60
+subrogaton.token.ttl: 60
+api.token.ttl: 60
+generic.users.subrogation.ttl: 60
+subrogation.ttl: 60
+
+springdoc:
+  app:
+    openIdConnectUrl: https://rabbit.xelians-dev.fr/cas/oidc/.well-known/openid-configuration
+  swagger-ui:
+    oauth:
+      client-id: iam-swagger
+    enabled: True
+
+app:
+  gateway:
+    cas:
+      name: cas-server
+      basepath:  /cas

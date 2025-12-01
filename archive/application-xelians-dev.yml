@@ -1,0 +1,113 @@
+spring:
+  application:
+    name: archive
+  cloud:
+    consul:
+      discovery:
+        health-check-url: http://${IP_INSTANCE}:5014/actuator/health
+
+  mail:
+    test-connection: false
+    host: smtp-xam-int.xelians-dev.fr
+    port: 2525
+    username: no-reply.${ENVIRONMENT}.dlab@xelians.fr
+    password: 
+    mail-from: no-${ENVIRONMENT}.dlab@xelians.fr
+    properties:
+      mail:
+        smtp:
+          auth: False
+          starttls:
+            enable: false
+
+  servlet:
+      multipart:
+        enabled: true
+        resolve-lazily: true
+        max-file-size: 1024MB
+        max-request-size: 1024MB
+
+logging:
+  level:
+    fr.locarchives.dlab: DEBUG
+
+server:
+  port: 6014
+  max-http-request-header-size: 10KB
+
+management:
+  otlp:
+    tracing:
+      endpoint: http://tracing.xelians-dev.fr:4318/v1/traces
+  server:
+    port: 5014
+
+fulltext:
+  maximum:
+    length: 65530
+    file:
+      size: 94371840
+
+system-tenant-identifier: 10
+
+ui-archive:
+  url: https://${ENVIRONMENT}.xelians-dev.fr/archive
+
+portal:
+  url: "https://${ENVIRONMENT}.xelians-dev.fr"
+
+display-extract-form:
+  extract-forms:
+    - type: RIA
+      first-field: RIA début
+      second-field: RIA fin
+      length: 22
+      mandatory: True
+      number-only: True
+
+integrity-attestation:
+  instance-operator-logo: instance-operator-logo.png
+  instance-operator: "Xelians"
+  product-name: "XELIANS ARCHIVES MANAGEMENT"
+  logo-nf: logo-nf.png
+  social-reason-1: "Siège social : 15 avenue Marcelin Berthelot - ZI du Val de Seine - 92396 Villeneuve la Garenne Cedex"
+  social-reason-2: "Tél. : 01 49 33 78 00 - RCS Nanterre - 450 943 204"
+
+barcode:
+  # client: CR <<<< need to be overriden in each environment
+  config:
+    pageWidth: 210 mm
+    pageHeight: 297 mm
+    leftMargin: 0 mm
+    rightMargin: 0 mm
+    topMargin: 0 mm
+    bottomMargin: 0 mm
+    verticalGap: 0 mm
+    horizontalGap: 0 mm
+    barcodeType: CODE_128
+    barcodeWidth: 70 mm
+    barcodeHeight: 25 mm
+    labelFontSize: 13F
+    codeFontSize: 10F
+    printCode: True
+    printBox: True
+    horizontalPrints: 2
+    verticalPrints: 4
+
+archive.item.maximum.size: 4294967296
+
+springdoc:
+  app:
+    openIdConnectUrl: https://${ENVIRONMENT}.xelians-dev.fr/cas/oidc/.well-known/openid-configuration
+  swagger-ui:
+    enabled: True
+
+sae:
+  type: hybrid
+  esafe:
+    url: https://esafe-integration.xelians-dev.fr
+  hybrid:
+    tenant-mapping:
+      type: file
+      file:
+        path: /app/data/tenant.json

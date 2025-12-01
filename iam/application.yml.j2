@@ -1,0 +1,204 @@
+spring:
+  cloud:
+    consul:
+      enabled: {{ consul.enabled | bool | lower }}
+      host: {{ consul.host }}
+      discovery:
+        preferIpAddress: {{ consul.prefer_ip_address | bool | lower }}
+        ipAddress: {{ ip_service }}
+        tags: iam-internal, api, internal, xam
+        instance-id: iam-internal-{{ inventory_hostname }}
+        scheme: https
+        health-check-url: {{ 'https' if iam_internal.management_server_ssl_enabled else 'http' }}://{{ ip_service }}:{{ iam_internal.management_server_port }}/actuator/health
+        health-check-tls-skip-verify: true
+    openfeign:
+      httpclient:
+        disable-ssl-validation: {{ openfeign.http_client.disable_ssl_validation | default('true') }}
+      client:
+        config:
+          default:
+            loggerLevel: {{ openfeign.client.config.default.logger_level | default('basic') }}
+  data:
+    mongodb:
+      uri: "mongodb://{{mongodb.iam.user}}:{{mongodb.iam.password}}@{{ mongodb.hosts }}/{{mongodb.iam.db}}?connectTimeoutMS={{mongod_client_connect_timeout_ms}}"
+  mail:
+    test-connection: false
+    host: {{ smtp.host }}
+    port: {{ smtp.port }}
+    username: {{ smtp.username }}
+    password: {{ smtp.password }}
+    mail-from: {{ smtp.mail_from }}
+    properties:
+      mail:
+        smtp:
+          auth: {{ smtp.auth }}
+          starttls:
+            enable: {{ smtp.enable_starttls | bool | lower }}
+{% if vitam.enabled  is sameas false %}
+  profiles: 
+    active: vitam-mock
+{% endif %}
+{% if sae is defined and (sae.type == 'esafe' or sae.type == 'hybrid') %}
+  security:
+    oauth2:
+      client:
+        provider:
+          esafe:
+            authorization-uri: {{ sae.esafe.url }}/oauth2/authorize
+            token-uri: {{ sae.esafe.url }}/oauth2/token
+            user-info-uri: {{ sae.esafe.url }}/userinfo
+            jwk-set-uri: {{ sae.esafe.url }}/oauth2/jwks
+        registration:
+          xam:
+            client-id: {{ sae.esafe.security.oauth2.client.client_id }}
+            client-secret: {{ sae.esafe.security.oauth2.client.client_secret }}
+            client-authentication-method: client_secret_post
+            authorization-grant-type: access_key          
+            scope: openid
+            provider: esafe
+
+sae:
+  type: {{ sae.type }}
+  esafe:
+    organization:
+      id-strategy: {{ sae.esafe.organization.id_strategy | default('SEQUENCE') }}
+    url: {{ sae.esafe.url }}
+    loggerLevel: {{ sae.esafe.logger_level | default('basic') }}
+    security:
+      oauth2:
+        client:
+          registration-id: {{ sae.esafe.security.oauth2.client.registration_id }}
+      user:
+        name: {{ sae.esafe.security.user.name }}
+        access-key: {{ sae.esafe.security.user.access_key }}
+  hybrid:
+    default-sae: {{ sae.hybrid.default | default('vitam') }}
+    tenant-mapping:
+      type: file
+      file:
+        path: {{sae.hybrid.tenant_mapping.file.path}}
+
+{% endif %}
+
+logging:
+  file:
+    name: {{ springboot_root_path }}/{{ springboot_log_dir }}/{{ springboot_name }}/{{ springboot_name }}.json.log
+  level:
+    fr.gouv.vitamui: {{ logging.level | default('INFO') }}
+    fr.gouv.vitamui.iam.internal.server: {{ iam_internal.logging_level_fr_gouv_vitamui_iam_internal_server }}
+
+server:
+  forward-headers-strategy: framework
+  port: {{ iam_internal.server_port }}
+  ssl:
+    key-store: {{ springboot_root_path }}/{{ springboot_conf_dir }}/{{ springboot_name }}/{{ iam_internal.server_ssl_keystore_filename }}
+    key-store-password: {{ iam_internal.server_ssl_keystore_password }}
+    key-password: {{ iam_internal.server_ssl_key_password }}
+  max-http-request-header-size: {{ iam_internal.server_max_http_header_size }}
+  tomcat:
+    accesslog:
+      enabled: "{{ iam_internal.server_tomcat_enabled | bool | lower }}"
+      directory: "{{ springboot_root_path }}/{{ springboot_log_dir }}/{{ springboot_name }}/"
+
+gdpr_alert_readonly: {{ iam_internal.gdpr_alert_readonly | default(true) }}
+
+management:
+{% if tracing.enabled  is sameas true %}
+  opentelemetry:
+    resource-attributes:
+      deployment.environment: {{ current_env }}
+  otlp:
+    tracing:
+      endpoint: {{ tracing.otp_collector_endpoint | default('127.0.0.1') }}
+      export:
+        enabled: {{ tracing.enabled | default(false)  }}
+{% endif %}
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      instance: {{ hostvars[inventory_hostname]['ip_service'] }}
+      hostname: {{ ansible_hostname }}
+      environment: {{ current_env }}
+  server:
+    port: {{ iam_internal.management_server_port }}
+    ssl:
+      enabled: {{ iam_internal.management_server_ssl_enabled | bool | lower }}
+
+login:
+  url: {{ cas_server.cas_server_prefix }}/login
+
+theme:
+  vitamui-platform-name: {{ iam_internal.platform_name }}
+
+{% if provisioning_client.enabled is sameas true %}
+provisioning-client:
+  token-api-user-provisioning: "{{ iam_internal.user_provisioning_token }}"
+  identity-providers:
+{% for _, configuration in provisioning_client.identity_providers.items() %}
+    - idp-identifier: {{ configuration.idp_identifier }}
+      uri: "{{ configuration.uri }}"
+      client:
+        secure: {{ configuration.client_secure | bool | lower }}
+        ssl-configuration:
+          keystore:
+            key-path: {{ springboot_root_path }}/{{ springboot_conf_dir }}/{{ springboot_name }}/{{ configuration.keystore_name }}
+            key-password: {{ configuration.client_ssl_keystore_password }}
+            type: {{ configuration.keystore_type }}
+          truststore:
+            key-path: {{ springboot_root_path }}/{{ springboot_conf_dir }}/{{ springboot_name }}/{{ configuration.truststore_name }}
+            key-password: {{ configuration.client_ssl_truststore_password }}
+            type: {{ configuration.truststore_type }}
+          hostname-verification: {{ configuration.hostname_verification | bool | lower }}
+{% endfor %}
+{% endif %}
+
+login.attempts.maximum.failures: {{ iam_internal.login_attempts_maximum_failures }}
+login.attempts.time.interval: {{ iam_internal.login_attempts_time_interval }}
+
+vitam.tenant.init.mandatory: {{ iam_internal.vitam_tenant_init_mandatory | bool | lower }} # true/false, see with Romain for further info ... later...
+
+#  Will set first host as primary and the rest will be disabled
+{% if inventory_hostname != groups['iam_internal']|first%}
+# By default is true
+instance:
+  primary: false
+{% endif %}
+
+logbook:
+  scheduling:
+    enabled: {{ iam_internal.logbook_scheduling_enabled }}
+    sendEventToVitamTasks:
+      delay: {{ iam_internal.logbook_scheduling_delay }}
+
+customer.init.config.file: {{ springboot_root_path }}/{{ springboot_conf_dir }}/{{ springboot_name }}/customer-init.yml
+
+user.connection.tracing.enabled: {{ iam_internal.user_connection_tracing_enabled | default(true) }}
+
+address:
+  max-street-length: {{ address.max_street_length }}
+
+# Password configuration
+password:
+  max-old-password: {{ vitamui_password_configurations.password.max_old_password | default('12') }}
+
+# User Token/Subrogation TTL
+token.ttl: {{ iam_internal.user_token_ttl }}
+token.additional.ttl: {{ iam_internal.user_token_additional_ttl }}
+subrogaton.token.ttl: {{ iam_internal.user_subrogation_token_ttl }}
+api.token.ttl: {{ iam_internal.api_token_ttl }}
+generic.users.subrogation.ttl: {{ iam_internal.generic_users_subrogation_ttl }}
+subrogation.ttl: {{ iam_internal.subrogation_ttl }}
+
+springdoc:
+  app:
+    openIdConnectUrl: {{ cas_server.cas_server_prefix }}/oidc/.well-known/openid-configuration
+  swagger-ui:
+    oauth:
+      client-id: iam-swagger
+    enabled: {{swagger_enabled | default(false)}}
+
+app:
+  gateway:
+    cas:
+      name: cas-server
+      basepath:  {{ cas_server.server_context_path | default('') }}

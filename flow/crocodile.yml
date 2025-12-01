@@ -1,0 +1,367 @@
+spring:
+  cloud:
+    consul:
+      enabled: true
+      host: localhost
+      discovery:
+        ipAddress: 172.16.24.39
+        tags: flow-internal, api, internal, xam
+        preferIpAddress: true
+        instance-id: flow-internal-dev-env
+        scheme: https
+        health-check-url: http://172.16.24.39:5018/actuator/health
+        health-check-tls-skip-verify: true
+    openfeign:
+      httpclient:
+        disable-ssl-validation: true
+      client:
+        config:
+          default:
+            loggerLevel: basic
+  data:
+    mongodb:
+      uri: "mongodb://api-flow:api-flow@172.16.24.39:27019/flow?connectTimeoutMS=2000"
+  mail:
+    test-connection: False
+    host: smtp-xam-int.xelians-dev.fr
+    port: 2525
+    username: no-reply.crocodile.dlab@xelians.fr
+    password: 
+    mail-from: no-reply-crocodile.dlab@xelians.fr
+    properties:
+      mail:
+        smtp:
+          auth: False
+          starttls:
+            enable: false
+
+  activemq:
+    broker-url: failover:tcp://172.16.24.39:61616
+    user: system
+    password: manager
+
+sae:
+  type: hybrid
+  esafe:
+    organization:
+      id-strategy: RANDOM
+    url: https://esafe-integration.xelians-dev.fr
+    loggerLevel: FULL
+    security:
+      user:
+        username: root
+        api-key: xxxx
+  hybrid:
+    default-sae: vitam
+    tenant-mapping:
+      type: file
+      file:
+        path: /xelians-apps/data/iam_internal/tenant.json
+
+
+logging:
+  file:
+    name: /xelians-apps/logs/flow_internal/flow_internal.json.log
+  level:
+    fr.locarchives.dlab: DEBUG
+
+server:
+  forward-headers-strategy: framework
+  port: 6018
+  ssl:
+    key-store: "/xelians-apps/conf/flow_internal/keystore_flow-internal.jks"
+    key-store-password: changeme
+    key-password: changeme
+  max-http-request-header-size: 10KB
+  tomcat:
+    accesslog:
+        enabled: "False"
+        directory: "/xelians-apps/logs/flow_internal/"
+
+management:
+  opentelemetry:
+    resource-attributes:
+      deployment.environment: crocodile
+  otlp:
+    tracing:
+      endpoint: http://tracing.xelians-dev.fr:4318/v1/traces
+      export:
+        enabled: True
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      instance: 172.16.24.39
+      hostname: crocodile-xam
+      environment: crocodile
+  server:
+    port: 5018
+    ssl:
+      enabled: false
+
+
+security:
+ system:
+   identity: api-flow-internal
+   applicationId: api-flow-internal
+   token: tokapiflow_x2wiZu3B5grvDfVH
+   userId: apiflowuser
+
+
+flow-internal:
+  iam-internal-client:
+    server-host: iam-internal.service.consul
+    server-port: 6003
+    secure: true
+    ssl-configuration:
+      truststore:
+        key-path: "/xelians-apps/conf/flow_internal/truststore_server.jks"
+        key-password: changeme
+      hostname-verification: "false"
+  archive-client:
+    server-host: archive-internal.service.consul
+    server-port: 6014
+    secure: true
+    ssl-configuration:
+      truststore:
+        key-path: "/xelians-apps/conf/flow_internal/truststore_server.jks"
+        key-password: changeme
+        type: JKS
+      hostname-verification: "false"
+  logistic-internal-client:
+    server-host: logistic-internal.service.consul
+    server-port: 6015
+    secure: true
+    connect-timeOut: 30
+    read-timeOut: 30
+    write-timeOut: 30
+    ssl-configuration:
+      truststore:
+        key-path: "/xelians-apps/conf/flow_internal/truststore_server.jks"
+        key-password: changeme
+        type: JKS
+      hostname-verification: "false"
+  interco-client:
+    server-host: tyk-dev.xelians.fr
+    server-port: 10443
+    secure: true
+    no-client-authentication: True
+    connect-timeOut: 100
+    read-timeOut: 100
+    write-timeOut: 100
+    ssl-configuration:
+      truststore:
+        key-path: "/xelians-apps/conf/flow_internal/truststore_server.jks"
+        key-password: changeme
+        type: JKS
+      hostname-verification: "false"
+
+  secure-transfer-client:
+    server-host: 127.0.0.1
+    server-port: 443
+    secure: true
+    no-client-authentication: True
+    connect-timeOut: 100
+    read-timeOut: 100
+    write-timeOut: 100
+    ssl-configuration:
+      truststore:
+        key-path: "/xelians-apps/conf/flow_internal/truststore_server.jks"
+        key-password: changeme
+        type: JKS
+      hostname-verification: "false"
+
+interco:
+  token: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IjYwNWE2Y2NjOTMxNmJiMjI4MzEwOGYyOTI5Njc0OTdhZTQ1MTRkNmU5YTUwNDNiOGQ4ZDE2MDhkIn0.eyJzdWIiOiJJTlRFUkNPIiwibmJmIjoiMTY0OTE3MDgwNCIsImV4cCI6IjIyMTcyNTQ0MDQiLCJpYXQiOiIxNjQ5MTcwODA0In0.YTkP1eZs7pOfY_DGKKy3fPgIYe9beYpGMA7aFiZTXxQQqgqDBpb36jTxW3Y1Pr-jtT4Yc4EztSmfh-TZCgJOvMkDGc-4Tggr0ktIvgqFSZF6qFimvt8ktkrhVBiXd_1P89KKE2ffYXbuD45BnITQhaVZduVK31s0_VqCi4y08H-JvaUSd_PjoEkNIgZYhGQDKK8YtwjiD45olCyQqUr-Q91-nGIHmh_Be6EgvV5rLndsvdCtWEsaOIrC4DpVbvMBmOgHhIig9Yg8n9uRYXMJL9gYSSjKZ6tRy9mLJeARTjGC2EsaULJ43A0FSUY79pSgyVBeGt4dWOu_GSzk9izqzkrPRpzD1qfDmJ6FSFG43UG9hKxG7kl917me_Xoh1iaieGFyqSWLW08Dw9aOMotc7AsiW7k2TU4RI3F-3aBkbh9wVQCRT5aS81AXC9KwTjOJO2UNJnnnmCsGPUjxyRTpRi7h9X9i7MQWmYO93T2-Z16MZsmFw4V6ZkwtbpE5qtQ4MwLDQlZoLzl0CpOhYirxw74u6vjG6iphQIY-61o7WH7QASKlnmmQfRnj-7XCkchaOEAGhuaDZmjTJF6bguCDMIRrbcYYPS9uEPtWVfRIC6tAYPeKNgxvi1kmDpVOW6q3hGflVvmK3JqzPioJF4lyKSE-3zmv4XA0bfXYurqc5TE
+  context: /interco
+
+armoni:
+  server-host:  https://castor-elca.xelians-dev.fr
+  server-port: 443
+  secure: true
+  ssl-configuration:
+    truststore:
+      key-path: "/xelians-apps/conf/flow_internal/truststore_server.jks"
+      key-password: changeme
+      type: JKS
+    hostname-verification: false
+  cas:
+    url: https://castor-elca.xelians-dev.fr
+    auth-api-path: /cas/oauth2.0/accessToken
+    client-id: xam-armoni
+    client-secret: xamarmonisecret
+    grant-type: password
+    username: xam-api@xelians.fr
+    password: TeamDEMO2018!
+  syncStatusRetentionInHours: 1
+  api:
+    url: https://castor-elca.xelians-dev.fr/wms-api/
+  async-api:
+    url: https://castor-elca.xelians-dev.fr/wms-api/items/async
+  code-range-api:
+    url: https://castor-elca.xelians-dev.fr/wms-api/code-ranges
+  upcoming-logistic-unit-api:
+    url: https://castor-elca.xelians-dev.fr/wms-api/upcoming-logistic-units
+  owners-api:
+    url: https://castor-elca.xelians-dev.fr/wms-api/owners
+  logistic-units-api:
+    url: https://castor-elca.xelians-dev.fr/wms-api/logistic-units
+  series-api:
+    url: https://castor-elca.xelians-dev.fr/wms-api/series
+
+
+platform-informations:
+  name: "system_customer"
+  theme:
+    header-logo: "logo_HEADER.png"
+
+folders:
+  assets: "/xelians-apps/conf/assets"
+
+workspace:
+  itemPath: "/xelians-apps/data/flow_internal/workspace/item"
+  operationPath: "/xelians-apps/data/flow_internal/workspace/opertations"
+  tempPath: "/xelians-apps/data/flow_internal/workspace/tmp"
+
+operation:
+   folder:
+   vitam:
+      cronExpression: 0/30 * * * * ?
+
+workflow:
+  transfer:
+    disposal:
+      cronExpression: 0/30 * * * * ?
+    ingest:
+      cronExpression: 0/30 * * * * ?
+  accessItem:
+    dexto:
+      cronExpression: 0/30 * * * * ?
+  operation:
+    cronExpression: 0/30 * * * * ?
+
+item:
+  unit:
+    limit:
+      creation: 1000
+      total: 10000
+      disposal-creation: 10000
+      disposal-total: 10000
+
+index-item-documents:
+  maximum-document-number: 1000
+  maximum-document-size: 4096
+  maximum-total-document-size: 15360
+
+maximum-sip-size: 2147483648
+
+qrcode:
+  casUrl: "https://crocodile.xelians-dev.fr/cas"
+  flowUrl: "https://crocodile.xelians-dev.fr/flow/flow-api"
+  dev:
+    enabled: False
+    defaultPassword: changeme
+    defaultLogin: demo@xelians-dev.fr
+    environment: crocodile
+
+scheduler:
+  itemConsultation:
+    dayIntervalThreshold: 10
+  flowStatus:
+    cronExpression: 0 * * ? * *
+  itemCleaning:
+    cronExpression: 0 0 * ? * *
+    retentionPeriod: P1D
+    limit: 5
+  operation:
+    timeoutJob:
+      cronExpression: 0 0 * ? * *
+    obsolete:
+      cronExpression: 0 0 * ? * *
+    vitamOperation:
+      cronExpression: 0/30 * * * * ?
+  uploadDocumentsCleaning:
+       cronExpression: 0 0 10 ? * *
+       retentionTimeInMilliseconds: 21600000
+  unitCleaning:
+    cronExpression: 0 0 10 ? * *
+    retentionTimeInDay: 90
+  blockedItem:
+    cronExpression: "-"
+    maxDelayBlocked: 10
+  itemUserAlerts:
+    cronExpression: 0 0 10 ? * *
+    maxAlertsPerUser: 10
+  armoniSync:
+    enabled: True
+    cronExpression: 0 0 * * * ?
+  itemDocumentCleaning:
+    cronExpression: 0 0 10 ? * *
+    maxDelayItemDocumentCleaning: 90
+
+
+#  Will set first host as primary and the rest will be disabled
+
+logbook:
+  scheduling:
+    enabled: True
+    sendEventToVitamTasks:
+      delay: 1000
+
+timer.period: 30000
+spring.activemq.packages.trusted: fr.locarchives.dlab, fr.gouv.vitamui, java
+spring.files.workspace: ~/workspace/flow
+
+fulltext.maximum.length: 32760
+fulltext.maximum.file.size: 94371840
+
+ui-flow:
+  url: "https://crocodile.xelians-dev.fr/flow"
+  my-activity-item-explorer-path: "items"
+  customer-item: "customer-item/item"
+  explorer-path: "explorer"
+  my-activity: "activity"
+  vitamui-primary: "#093DC5"
+
+
+barcode:
+  client: CR
+  config:
+    pageWidth: 210 mm
+    pageHeight: 297 mm
+    leftMargin: 0 mm
+    rightMargin: 0 mm
+    topMargin: 0 mm
+    bottomMargin: 0 mm
+    verticalGap: 0 mm
+    horizontalGap: 0 mm
+    barcodeType: CODE_128
+    barcodeWidth: 70 mm
+    barcodeHeight: 25 mm
+    labelFontSize: 13F
+    codeFontSize: 10F
+    printCode: True
+    printBox: True
+    horizontalPrints: 2
+    verticalPrints: 4
+
+secure-transfer:
+  email: fenix_api@xelians.fr
+  password: Xm2VfEmMGYmg7s3
+
+
+springdoc:
+  app:
+    openIdConnectUrl: https://crocodile.xelians-dev.fr/cas/oidc/.well-known/openid-configuration
+  swagger-ui:
+    oauth:
+      client-id: flow-swagger
+    enabled: True
+
+app:
+  gateway:
+    iam:
+      name: iam-internal
+    archive:
+      name: archive-internal
+    logistic:
+      name: logistic-internal

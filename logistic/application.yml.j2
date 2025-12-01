@@ -1,0 +1,133 @@
+spring:
+  cloud:
+    consul:
+      enabled: {{ consul.enabled | bool | lower }}
+      host: {{ consul.host }}
+      discovery:
+        ipAddress: {{ ip_service }}
+        tags: logistic-internal, api, internal, xam
+        preferIpAddress: {{ consul.prefer_ip_address | bool | lower  }}
+        instance-id: logistic-internal-{{ inventory_hostname }}
+        scheme: https
+        health-check-url: {{ 'https' if logistic_internal.management_server_ssl_enabled else 'http' }}://{{ ip_service }}:{{ logistic_internal.management_server_port }}/actuator/health
+        health-check-tls-skip-verify: true
+    openfeign:
+      httpclient:
+        disable-ssl-validation: {{ openfeign.http_client.disable_ssl_validation | default('true') }}
+      client:
+        config:
+          default:
+            loggerLevel: {{ openfeign.client.config.default.logger_level | default('basic') }}
+  datasource:
+    url: jdbc:postgresql://{{ groups['postgresql_master'] | map('extract', hostvars, ['ip_service']) | list | first }}:{{ postgresql_server_port | default('5432') }}/{{ postgresql_logistic_database }}
+    username: "{{ postgresql_logistic_user }}"
+    password: "{{ postgresql_logistic_password }}"
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        default_schema: public
+        jdbc:
+          lob:
+            non_contextual_creation: true
+  liquibase:
+    default-schema: ${spring.jpa.properties.hibernate.default_schema}
+    drop-first: {{ logistic_internal.liquibase.drop_database | default('false')}}
+    change-log: classpath:db/changelog-master.yml
+    contexts: {{ logistic_internal.liquibase.contexts | default('prod')}}
+  servlet:
+    multipart:
+      max-file-size: {{ logistic_internal.servlet_multipart_max_file_size }}
+      max-request-size: {{ logistic_internal.servlet_multipart_max_request_size }}
+logging:
+  file:
+    name: {{ springboot_root_path }}/{{ springboot_log_dir }}/{{ springboot_name }}/{{ springboot_name }}.json.log
+  level:
+    fr.locarchives.dlab: {{ logging.level | default('INFO') }}
+
+server:
+  forward-headers-strategy: framework
+  port: {{ logistic_internal.server_port }}
+  ssl:
+    key-store: "{{ springboot_root_path }}/{{ springboot_conf_dir }}/{{ springboot_name }}/{{ logistic_internal.server_ssl_keystore_filename }}"
+    key-store-password: {{ logistic_internal.server_ssl_keystore_password }}
+    key-password: {{ logistic_internal.server_ssl_key_password }}
+  max-http-request-header-size: {{ logistic_internal.server_max_http_header_size }}
+  tomcat:
+    accesslog:
+        enabled: {{ logistic_internal.server_tomcat_enabled | bool | lower }}
+        directory: "{{ springboot_root_path }}/{{ springboot_log_dir }}/{{ springboot_name }}/"
+
+management:
+{% if tracing.enabled  is sameas true %}
+  opentelemetry:
+    resource-attributes:
+      deployment.environment: {{ current_env }}
+  otlp:
+    tracing:
+      endpoint: {{ tracing.otp_collector_endpoint | default('127.0.0.1') }}
+      export:
+        enabled: {{ tracing.enabled | default(false)  }}
+{% endif %}
+  tracing:
+    enabled: {{ tracing.enabled }}
+  zipkin:
+    tracing:
+      endpoint: {{ tracing.zipkin_endpoint }}
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      instance: {{ hostvars[inventory_hostname]['ip_service'] }}
+      hostname: {{ ansible_hostname }}
+      environment: {{ current_env }}
+  server:
+    port: {{ logistic_internal.management_server_port }}
+    ssl:
+      enabled: {{ logistic_internal.management_server_ssl_enabled | bool | lower }}
+
+security:
+ system:
+   identity: api-logistic-internal
+   applicationId: api-logistic-internal
+   token: {{ logistic_internal.token_api }}
+   userId: apiflowuser
+
+barcode:
+  config:
+    pageWidth: {{ barcode.config_pageWidth }}
+    pageHeight: {{ barcode.config_pageHeight }}
+    leftMargin: {{ barcode.config_leftMargin }}
+    rightMargin: {{ barcode.config_rightMargin }}
+    topMargin: {{ barcode.config_topMargin }}
+    bottomMargin: {{ barcode.config_bottomMargin }}
+    verticalGap: {{ barcode.config_verticalGap }}
+    horizontalGap: {{ barcode.config_horizontalGap }}
+    barcodeType: {{ barcode.config_barcodeType }}
+    barcodeWidth: {{ barcode.config_barcodeWidth }}
+    barcodeHeight: {{ barcode.config_barcodeHeight }}
+    labelFontSize: {{ barcode.config_labelFontSize }}
+    codeFontSize: {{ barcode.config_codeFontSize }}
+    printCode: {{ barcode.config_printCode }}
+    printBox: {{ barcode.config_printBox }}
+    horizontalPrints: {{ barcode.config_horizontalPrints }}
+    verticalPrints: {{ barcode.config_verticalPrints }}
+
+workspace:
+  tempPath: "{{ springboot_root_path }}/{{ springboot_data_dir }}/{{ springboot_name }}/workspace/tmp"
+
+springdoc:
+  app:
+    openIdConnectUrl: {{ cas_server.cas_server_prefix }}/oidc/.well-known/openid-configuration
+  swagger-ui:
+    oauth:
+      client-id: logistic-swagger
+    enabled: {{swagger_enabled | default(false)}}
+
+app:
+  gateway:
+    iam:
+      name: iam-internal
+    archive:
+      name: archive-internal

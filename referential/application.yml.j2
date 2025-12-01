@@ -1,0 +1,121 @@
+spring:
+  cloud:
+    consul:
+      enabled: {{ consul.enabled | bool | lower }}
+      host: {{ consul.host }}
+      discovery:
+        preferIpAddress: {{ consul.prefer_ip_address | bool | lower }}
+        ipAddress: {{ ip_service }}
+        tags: referential-internal, api, internal, xam
+        instance-id: referential-internal-{{ inventory_hostname }}
+        scheme: https
+        health-check-url: {{ 'https' if referential_internal.management_server_ssl_enabled else 'http' }}://{{ ip_service }}:{{ referential_internal.management_server_port }}/actuator/health
+        health-check-tls-skip-verify: true
+    openfeign:
+      httpclient:
+        disable-ssl-validation: {{ openfeign.http_client.disable_ssl_validation | default('true') }}
+      client:
+        config:
+          default:
+            loggerLevel: {{ openfeign.client.config.default.logger_level | default('basic') }}
+  servlet:
+    multipart:
+      max-file-size: -1
+      max-request-size: -1
+{% if sae is defined and (sae.type == 'esafe' or sae.type == 'hybrid') %}
+  security:
+    oauth2:
+      client:
+        provider:
+          esafe:
+            authorization-uri: {{ sae.esafe.url }}/oauth2/authorize
+            token-uri: {{ sae.esafe.url }}/oauth2/token
+            user-info-uri: {{ sae.esafe.url }}/userinfo
+            jwk-set-uri: {{ sae.esafe.url }}/oauth2/jwks
+        registration:
+          xam:
+            client-id: {{ sae.esafe.security.oauth2.client.client_id }}
+            client-secret: {{ sae.esafe.security.oauth2.client.client_secret }}
+            client-authentication-method: client_secret_post
+            authorization-grant-type: access_key          
+            scope: openid
+            provider: esafe
+
+sae:
+  type: {{ sae.type }}
+  esafe:
+    organization:
+      id-strategy: {{ sae.esafe.organization.id_strategy | default('SEQUENCE') }}
+    url: {{ sae.esafe.url }}
+    loggerLevel: {{ sae.esafe.logger_level | default('basic') }}
+    security:
+      oauth2:
+        client:
+          registration-id: {{ sae.esafe.security.oauth2.client.registration_id }}
+      user:
+        name: {{ sae.esafe.security.user.name }}
+        access-key: {{ sae.esafe.security.user.access_key }}
+  hybrid:
+    default-sae: {{ sae.hybrid.default | default('vitam') }}
+    tenant-mapping:
+      type: file
+      file:
+        path: {{sae.hybrid.tenant_mapping.file.path}}
+
+{% endif %}
+
+logging:
+  file:
+    name: {{ springboot_root_path }}/{{ springboot_log_dir }}/{{ springboot_name }}/{{ springboot_name }}.json.log
+  level:
+    fr.gouv.vitamui: {{ logging.level | default('INFO') }}
+
+server:
+  forward-headers-strategy: framework
+  port: {{ referential_internal.server_port }}
+  ssl:
+    key-store: {{ springboot_root_path }}/{{ springboot_conf_dir }}/{{ springboot_name }}/{{ referential_internal.server_ssl_keystore_filename }}
+    key-store-password: {{ referential_internal.server_ssl_keystore_password }}
+    key-password: {{ referential_internal.server_ssl_key_password }}
+  max-http-request-header-size: {{ referential_internal.server_max_http_header_size }}
+  tomcat:
+    connection-timeout: {{ referential_internal.server_connection_timeout }}
+    accesslog:
+      enabled: "{{ referential_internal.server_tomcat_enabled | bool | lower }}"
+      directory: "{{ springboot_root_path }}/{{ springboot_log_dir }}/{{ springboot_name }}/"
+
+management:
+{% if tracing.enabled  is sameas true %}
+  opentelemetry:
+    resource-attributes:
+      deployment.environment: {{ current_env }}
+  otlp:
+    tracing:
+      endpoint: {{ tracing.otp_collector_endpoint | default('127.0.0.1') }}
+      export:
+        enabled: {{ tracing.enabled | default(false)  }}
+{% endif %}
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      instance: {{ hostvars[inventory_hostname]['ip_service'] }}
+      hostname: {{ ansible_hostname }}
+      environment: {{ current_env }}
+
+  server:
+    port: {{ referential_internal.management_server_port }}
+    ssl:
+      enabled: {{ referential_internal.management_server_ssl_enabled | bool | lower }}
+
+springdoc:
+  app:
+    openIdConnectUrl: {{ cas_server.cas_server_prefix }}/oidc/.well-known/openid-configuration
+  swagger-ui:
+    oauth:
+      client-id: referential-swagger
+    enabled: {{swagger_enabled | default(false)}}
+
+app:
+  gateway:
+    iam:
+      name: iam-internal

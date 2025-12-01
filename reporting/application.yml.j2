@@ -1,0 +1,181 @@
+spring:
+  cloud:
+    consul:
+      enabled: {{ consul.enabled | bool | lower }}
+      host: {{ consul.host }}
+      discovery:
+        ipAddress: {{ ip_service }}
+        tags: reporting-internal, api, internal, xam
+        preferIpAddress: {{ consul.prefer_ip_address | bool | lower }}
+        instance-id: reporting-internal-{{ inventory_hostname }}
+        scheme: https
+        health-check-url: {{ 'https' if reporting_internal.management_server_ssl_enabled else 'http' }}://{{ ip_service }}:{{ reporting_internal.management_server_port }}/actuator/health
+        health-check-tls-skip-verify: true
+    openfeign:
+      httpclient:
+        disable-ssl-validation: {{ openfeign.http_client.disable_ssl_validation | default('true') }}
+      client:
+        config:
+          default:
+            loggerLevel: {{ openfeign.client.config.default.logger_level | default('basic') }}
+  data:
+    mongodb:
+      uri: "mongodb://{{ mongodb.reporting.user }}:{{ mongodb.reporting.password }}@{{ mongodb.hosts }}/{{mongodb.reporting.db}}?connectTimeoutMS={{mongod_client_connect_timeout_ms}}"
+{% if sae is defined and (sae.type == 'esafe' or sae.type == 'hybrid') %}
+  security:
+    oauth2:
+      client:
+        provider:
+          esafe:
+            authorization-uri: {{ sae.esafe.url }}/oauth2/authorize
+            token-uri: {{ sae.esafe.url }}/oauth2/token
+            user-info-uri: {{ sae.esafe.url }}/userinfo
+            jwk-set-uri: {{ sae.esafe.url }}/oauth2/jwks
+        registration:
+          xam:
+            client-id: {{ sae.esafe.security.oauth2.client.client_id }}
+            client-secret: {{ sae.esafe.security.oauth2.client.client_secret }}
+            client-authentication-method: client_secret_post
+            authorization-grant-type: access_key          
+            scope: openid
+            provider: esafe
+
+sae:
+  type: {{ sae.type }}
+  esafe:
+    organization:
+      id-strategy: {{ sae.esafe.organization.id_strategy | default('SEQUENCE') }}
+    url: {{ sae.esafe.url }}
+    loggerLevel: {{ sae.esafe.logger_level | default('basic') }}
+    security:
+      oauth2:
+        client:
+          registration-id: {{ sae.esafe.security.oauth2.client.registration_id }}
+      user:
+        name: {{ sae.esafe.security.user.name }}
+        access-key: {{ sae.esafe.security.user.access_key }}
+  hybrid:
+    default-sae: {{ sae.hybrid.default | default('vitam') }}
+    tenant-mapping:
+      type: file
+      file:
+        path: {{sae.hybrid.tenant_mapping.file.path}}
+
+{% endif %}
+
+server:
+  forward-headers-strategy: framework
+  port: {{ reporting_internal.server_port }}
+  ssl:
+    key-store: "{{ springboot_root_path }}/{{ springboot_conf_dir }}/{{ springboot_name }}/{{ reporting_internal.server_ssl_keystore_filename }}"
+    key-store-password: {{ reporting_internal.server_ssl_keystore_password }}
+    key-password: {{ reporting_internal.server_ssl_key_password }}
+  max-http-request-header-size: {{ reporting_internal.server_max_http_header_size }}
+  tomcat:
+    accesslog:
+        enabled: "{{ reporting_internal.server_tomcat_enabled }}"
+        directory: "{{ springboot_root_path }}/{{ springboot_log_dir }}/{{ springboot_name }}/"
+
+management:
+{% if tracing.enabled  is sameas true %}
+  opentelemetry:
+    resource-attributes:
+      deployment.environment: {{ current_env }}
+  otlp:
+    tracing:
+      endpoint: {{ tracing.otp_collector_endpoint | default('127.0.0.1') }}
+      export:
+        enabled: {{ tracing.enabled | default(false)  }}
+{% endif %}
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      instance: {{ hostvars[inventory_hostname]['ip_service'] }}
+      hostname: {{ ansible_hostname }}
+      environment: {{ current_env }}
+
+  server:
+    port: {{ reporting_internal.management_server_port }}
+    ssl:
+      enabled: {{ reporting_internal.management_server_ssl_enabled | bool | lower }}
+
+logging:
+  file:
+    name: {{ springboot_root_path }}/{{ springboot_log_dir }}/{{ springboot_name }}/{{ springboot_name }}.json.log
+  level:
+    fr.locarchives.dlab: {{ logging.level | default('INFO') }}
+    fr.gouv.vitamui.referential.internal.server: {{ referential_internal.logging_level_fr_gouv_vitamui_referential_internal_server }}
+
+security:
+ system:
+   identity: {{ security.system_identity }}
+   applicationId: {{ security.system_applicationId }}
+   token: {{ reporting_internal.token_api }}
+   userId: {{ security.system_userId }}
+
+
+reporting-internal:
+  archive-client:
+    server-host: {{ archive_internal.server_host }}
+    server-port: {{ archive_internal.server_port }}
+    secure: {{ archive_internal.server_secure | bool | lower }}
+    ssl-configuration:
+      truststore:
+        key-path: "{{ springboot_root_path }}/{{ springboot_conf_dir }}/{{ springboot_name }}/{{ reporting_internal.server_ssl_truststore_filename }}"
+        key-password: {{ reporting_internal.server_ssl_truststore_password }}
+      hostname-verification: "{{ archive_internal.hostname_verification | bool | lower }}"
+  iam-internal-client:
+    server-host: {{ iam_internal.server_host }}
+    server-port: {{ iam_internal.server_port }}
+    secure: {{ iam_internal.server_secure | bool | lower }}
+    ssl-configuration:
+      truststore:
+        key-path: "{{ springboot_root_path }}/{{ springboot_conf_dir }}/{{ springboot_name }}/{{ reporting_internal.server_ssl_truststore_filename }}"
+        key-password: {{ reporting_internal.server_ssl_truststore_password }}
+      hostname-verification: "{{ iam_internal.hostname_verification | bool | lower }}"
+  flow-internal-client:
+    server-host: {{ flow_internal.server_host }}
+    server-port: {{ flow_internal.server_port }}
+    secure: {{ flow_internal.server_secure | bool | lower }}
+    read-time-out: {{ flow_internal.read_timeout }}
+    write-time-out: {{ flow_internal.write_timeout }}
+    ssl-configuration:
+      truststore:
+        key-path: "{{ springboot_root_path }}/{{ springboot_conf_dir }}/{{ springboot_name }}/{{ reporting_internal.server_ssl_truststore_filename }}"
+        key-password: {{ reporting_internal.server_ssl_truststore_password }}
+      hostname-verification: "{{ flow_internal.hostname_verification | bool | lower }}"
+
+tenants-to-exclude : {{ (reporting_internal.excluded_tenants + reporting_internal.extra_excluded_tenants) | join(', ')}} 
+job :
+  launch-on-startup: {{ reporting_internal.launch_on_startup }}
+  reporting-data-for-current-day: {{ reporting_internal.for_current_day }}
+  number-of-days-to-catch-up: {{ reporting_internal.number_of_days_to_catch_up }}
+  stock :
+    cronExpression : {{ reporting_internal.cron_expression }}
+    zone : Europe/Paris
+    chunk: {{ reporting_internal.stock_chunk | default(10) }}
+    maximum-years: {{ reporting_internal.stock_max_years | default(10) }}
+
+#  Will set first host as primary and the rest will be disabled
+{% if inventory_hostname != groups['reporting_internal']|first %}
+# By default is true
+instance:
+  primary: false
+{% endif %}
+
+springdoc:
+  app:
+    openIdConnectUrl: {{ cas_server.cas_server_prefix }}/oidc/.well-known/openid-configuration
+  swagger-ui:
+    oauth:
+      client-id: reporting-swagger
+    enabled: {{swagger_enabled | default(false)}}
+
+app:
+  gateway:
+    iam:
+      name: iam-internal
+    archive:
+      name: archive-internal
+    flow:
+      name: flow-internal

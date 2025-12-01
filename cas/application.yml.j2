@@ -1,0 +1,354 @@
+spring:
+  cloud:
+    consul:
+      enabled: {{ consul.enabled | bool | lower }}
+      host: {{ consul.host }}
+      discovery:
+        preferIpAddress: {{ consul.prefer_ip_address | bool | lower }}
+        ipAddress: {{ ip_service }}
+        tags: cas-server, cas, external, xam
+        instance-id: cas-server-{{ inventory_hostname }}
+        scheme: https
+        health-check-url: {{ 'https' if cas_server.management_server_ssl_enabled else 'http' }}://{{ ip_service }}:{{ cas_server.management_server_port }}/actuator/health
+        health-check-tls-skip-verify: true
+    openfeign:
+      httpclient:
+        disable-ssl-validation: {{ openfeign.http_client.disable_ssl_validation | default('true') }}
+      client:
+        config:
+          default:
+            loggerLevel: {{ openfeign.client.config.default.logger_level | default('basic') }}
+spring.application.name: cas-server
+
+
+server:
+  ssl:
+    key-store: {{ springboot_root_path }}/{{ springboot_conf_dir }}/{{ springboot_name }}/{{ cas_server.server_ssl_keystore_filename }}
+    key-store-password: {{ cas_server.server_ssl_keystore_password }}
+    key-password: {{ cas_server.server_ssl_key_password }}
+{% if kubernetes is not defined%}
+  host: {{ hostvars[inventory_hostname]['ip_service'] }}
+{% endif%}
+  port: {{ cas_server.server_port }}
+  servlet.context-path: {{ cas_server.server_context_path }}
+  servlet.session.cookie.path: {{ cas_server.server_servlet_session_cookie_path }}
+  tomcat.basedir: {{ springboot_root_path }}/{{ springboot_conf_dir }}/{{ springboot_name }}/tomcat
+
+
+management:
+  endpoints:
+    enabled-by-default: {{ cas_server.management_endpoints_enabled_by_default | bool | lower }}
+    web:
+      exposure:
+        include: '{{ cas_server.management_endpoints_web_exposure_include }}'
+  health:
+    memoryHealthIndicator:
+      enabled: {{ cas_server.management_health_memoryHealthIndicator | bool | lower }}
+{% if tracing.enabled  is sameas true %}
+  tracing:
+    enabled: {{ tracing.enabled }}
+  opentelemetry:
+    resource-attributes:
+      deployment.environment: {{ current_env }}
+  otlp:
+    tracing:
+      endpoint: {{ tracing.otp_collector_endpoint }}
+{% endif %}
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      instance: {{ hostvars[inventory_hostname]['ip_service'] }}
+      hostname: {{ ansible_hostname }}
+      environment: {{ current_env }}
+    export:
+      prometheus:
+        enabled: {{ cas_server.management_metrics_export_prometheus_enabled | bool | lower }}
+  server:
+    port: {{ cas_server.management_server_port }}
+    ssl:
+      enabled: {{ cas_server.management_server_ssl_enabled | bool | lower }}
+
+
+vitamui.cas.tenant.identifier: {{ cas_server.vitam_ui_cas_tenant_identifier }}
+vitamui.cas.identity: {{ cas_server.vitam_ui_cas_identity }}
+
+cas.authn.accept.users:
+
+
+cas.message-bundle.base-names: classpath:overriden_messages,classpath:messages
+
+
+cas.tgc.secure: {{ cas_server.cas_tgc_secure | bool | lower }}
+
+cas.tgc.crypto.enabled: {{ cas_server.cas_tgc_crypto_enabled | bool | lower }}
+cas.tgc.crypto.encryption.key: {{ cas_server.cas_tgc_crypto_encryption_key }}
+cas.tgc.crypto.signing.key: {{ cas_server.cas_tgc_crypto_signing_key }}
+
+cas.webflow.crypto.enabled: {{ cas_server.cas_webflow_crypto_enabled | bool | lower }}
+cas.webflow.crypto.encryption.key: {{ cas_server.cas_webflow_crypto_encryption_key }}
+cas.webflow.crypto.signing.key: {{ cas_server.cas_webflow_crypto_signing_key }}
+
+
+cas.authn.pm.reset.crypto.enabled: {{ cas_server.cas_authn_pm_reset_crypto_enabled | bool | lower }}
+cas.authn.pm.reset.crypto.encryption.key: {{ cas_server.cas_authn_pm_reset_crypto_encryption_key }}
+cas.authn.pm.reset.crypto.signing.key: {{ cas_server.cas_authn_pm_reset_crypto_signing_key }}
+
+cas.authn.oauth.crypto.encryption.key: {{ cas_server.cas_authn_oauth_crypto_encryption_key }}
+cas.authn.oauth.crypto.signing.key: {{ cas_server.cas_authn_oauth_crypto_signing_key }}
+cas.authn.oauth.access-token.crypto.encryption.key: {{ cas_server.cas_authn_oauth_access_token_crypto_encryption_key }}
+cas.authn.oauth.access-token.crypto.signing.key: {{ cas_server.cas_authn_oauth_access_token_crypto_signing_key }}
+cas.authn.oauth.session-replication.cookie.crypto.signing.key: {{ cas_server.cas_authn_oauth_session_replication_cookie_crypto_signing_key }}
+cas.authn.pac4j.core.session-replication.cookie.crypto.encryption.key: {{ cas_server.cas_authn_pac4j_core_session_replication_cookie_crypto_encryption_key }}
+cas.authn.pac4j.core.session-replication.cookie.crypto.signing.key: {{ cas_server.cas_authn_pac4j_core_session_replication_cookie_crypto_signing_key }}
+cas.authn.passwordless.tokens.crypto.encryption.key: {{ cas_server.cas_authn_passwordless_tokens_crypto_encryption_key }}
+cas.authn.passwordless.tokens.crypto.signing.key: {{ cas_server.cas_authn_passwordless_tokens_crypto_signing_key }}
+
+
+##
+# CAS Web Application Session Configuration
+#
+# 4 (hours) * 60 (minutes) * 60 (seconds)
+#server.servlet.session.timeout: PT14400S
+#cas.ticket.tgt.hardTimeout.timeToKillInSeconds: 14400
+
+
+cas.server.prefix: {{ cas_server.cas_server_prefix }}
+login.url: ${cas.server.prefix}/login
+
+cas.service-registry.mongo.client-uri: "mongodb://{{mongodb.cas.user}}:{{mongodb.cas.password}}@{{ mongodb.hosts }}/{{ mongodb.cas.db }}?connectTimeoutMS={{ mongod_client_connect_timeout_ms }}"
+cas.service-registry.mongo.collection: services
+cas.service-registry.mongo.user-id: {{ mongodb.cas.user }}
+cas.service-registry.mongo.password: {{ mongodb.cas.password }}
+
+
+cas.ticket.registry.mongo.client-uri: "mongodb://{{mongodb.cas.user}}:{{mongodb.cas.password}}@{{ mongodb.hosts }}/{{ mongodb.cas.db }}?connectTimeoutMS={{ mongod_client_connect_timeout_ms }}"
+
+
+cas.authn.surrogate.separator: "{{ cas_server.cas_authn_surrogate_separator }}"
+cas.authn.surrogate.mail.attribute-name: {{ cas_server.cas_authn_surrogate_mail_attributeName }}
+
+# 24 hours cache for login delegation
+cas.ticket.tst.time-to-kill-in-seconds: 86400
+
+cas.authn.pm.core.enabled: {{ cas_server.cas_authn_pm_enabled | bool | lower }}
+
+{% if vitamui_password_configurations.anssiPolicyPattern is defined and vitamui_password_configurations.password.profile == "anssi"  %}
+cas.authn.pm.core.password-policy-pattern: '{{ vitamui_password_configurations.anssiPolicyPattern  | replace("'","''") }}'
+{% else %}
+cas.authn.pm.core.password-policy-pattern: '{{ vitamui_password_configurations.customPolicyPattern | replace("'","''") }}'
+{% endif %}
+
+cas.authn.pm.reset.mail.subject: {{ cas_server.cas_authn_pm_reset_mail_subject }}
+cas.authn.pm.reset.mail.text: "{{ cas_server.cas_authn_pm_reset_mail_text }}"
+cas.authn.pm.reset.mail.from: {{ cas_server.cas_authn_pm_reset_mail_from }}
+cas.authn.pm.reset.expiration: "PT{{ cas_server.cas_authn_pm_reset_expirationMinutes }}M"
+cas.authn.pm.reset.number-of-uses: {{ cas_server.cas_authn_pm_reset_number_of_uses }}
+cas.authn.pm.reset.mail.attribute-name: {{ cas_server.cas_authn_pm_reset_mail_attributeName }}
+cas.authn.pm.reset.security-questions-enabled: {{ cas_server.cas_authn_pm_reset_securityQuestionsEnabled | bool | lower }}
+cas.authn.pm.reset.include-server-ip-address: {{ cas_server.cas_authn_pm_reset_includeServerIpAddress | bool | lower }}
+cas.authn.pm.reset.include-client-ip-address: {{ cas_server.cas_authn_pm_reset_includeClientIpAddress | bool | lower }}
+cas.authn.pm.core.auto-login: {{ cas_server.cas_authn_pm_autoLogin | bool | lower }}
+
+# Used to sign/encrypt the password-reset link
+# cas.authn.pm.reset.crypto.encryption.key:
+# cas.authn.pm.reset.crypto.signing.key:
+# cas.authn.pm.reset.crypto.enabled: true
+
+spring.mail.host: {{ smtp.host }}
+spring.mail.port: {{ smtp.port }}
+spring.mail.protocol: {{ smtp.protocol }}
+spring.mail.username: {{ smtp.username }}
+spring.mail.password: {{ smtp.password }}
+spring.mail.mail-from: {{ smtp.mail_from }}
+spring.mail.testConnection: {{ smtp.testConnection | bool | lower }}
+spring.mail.properties.mail.smtp.auth: {{ smtp.auth | bool | lower }}
+spring.mail.properties.mail.smtp.starttls.enable: {{ smtp.enable_starttls | bool | lower }}
+spring.mail.properties.mail.transport.protocol: {{ smtp.protocol }}
+
+
+cas.authn.throttle.failure.threshold: {{ cas_server.cas_authn_throttle_failure_threshold }}
+cas.authn.throttle.failure.range-seconds: {{ cas_server.cas_authn_throttle_failure_rangeSeconds }}
+
+
+cas:
+  logout:
+    follow-service-redirects: {{ cas_server.cas_logout_follow_service_redirects | bool | lower }}
+    redirect-parameter: {{ cas_server.cas_redirect_parameter }}
+
+cas.monitor.endpoints.endpoint.defaults.access[0]: {{ cas_server.cas_monitor_endpoints_endpoint_defaults_access }}
+
+{% if cas_server.cas_mfa_enabled is sameas true %}
+# for SMS:
+cas.sms-provider.sms-mode.url: {{ sms.url }}
+cas.sms-provider.sms-mode.access-token: {{ sms.token }}
+
+cas.authn.mfa.simple.sms.from: {{ cas_server.cas_authn_mfa_simple_sms_from }}
+cas.authn.mfa.simple.sms.text: {{ cas_server.cas_authn_mfa_simple_sms_text }}
+cas.authn.mfa.simple.sms.attribute-name: mobile
+cas.authn.mfa.simple.token.core.time-to-kill-in-seconds: {{ cas_server.cas_authn_mfa_simple_token_core_time_to_kill_in_seconds }}
+cas.authn.mfa.simple.token.core.token-length: {{ cas_server.cas_authn_mfa_simple_token_core_token_length }}
+cas.authn.mfa.triggers.principal.global-principal-attribute-name-triggers: computedOtp
+cas.authn.mfa.triggers.principal.global-principal-attribute-value-regex: 'true'
+cas.authn.mfa.simple.mail.text: {{ cas_server.cas_authn_mfa_simple_mail_text }}
+{% endif %}
+
+
+vitamui.portal.url: {{ ui_portal.base_url }}
+
+token.api.cas: {{ cas_server.token_api }}
+
+ip.header: {{ cas_server.ip_header }}
+
+
+# 8 hours in seconds
+cas.authn.oauth.access-token.max-time-to-live-in-seconds: {{ cas_server.token_ttl }}
+
+cas.authn.oidc.core.issuer: ${cas.server.prefix}/oidc
+cas.authn.oidc.jwks.file-system.jwks-file: file:{{ springboot_root_path }}/{{ springboot_conf_dir }}/{{ springboot_name }}/oidc_keystore.jwks
+
+# Example to override theme colors, logo, favicon, platform name ...
+theme:
+  vitamui-platform-name: {{ cas_server.platform_name }}
+  vitamui-favicon: {{ vitamui_assets }}/favicon.ico
+  vitam-logo: {{ vitamui_assets }}/locarchives-logo.png
+  vitamui-logo-large: {{ vitamui_assets }}/logo-large.png
+  primary: '{{ theme.vitamui_primary }}'
+  secondary: '{{ theme.vitamui_secondary }}'
+  background: '{{ theme.vitamui_background }}'
+
+
+logging:
+  file:
+    path: {{ springboot_root_path }}/{{ springboot_log_dir }}/{{ springboot_name }}
+    name: {{ springboot_name }}
+  audit:
+    enabled:
+      {{ cas_server.logger_audit_enable}}
+  level:
+    org.reflections.Reflections: {{ cas_server.loging_level_org_reflections_Reflections }}
+    org.apereo.cas.web.CasWebApplication: {{ cas_server.loging_level_org_apereo_cas_web_CasWebApplication }}
+    org.springframework.boot.autoconfigure.security: {{ cas_server.loging_level_org_springframework_boot_autoconfigure_security }}
+    org.jasig.cas.client: {{ cas_server.loging_level_org_jasig_cas_client }}
+    org.apereo: {{ cas_server.loging_level_org_apereo }}
+    org.springframework.cloud: {{ cas_server.loging_level_org_springframework_cloud }}
+    org.springframework.amqp: {{ cas_server.loging_level_org_springframework_amqp }}
+    org.springframework.context.annotation: {{ cas_server.loging_level_org_springframework_context_annotation }}
+    org.springframework.boot.devtools: {{ cas_server.loging_level_org_springframework_boot_devtools }}
+    org.apereo.cas.web.flow: {{ cas_server.loging_level_org_apereo_cas_web_flow }}
+    org.apereo.inspektr.audit.support: {{ cas_server.loging_level_org_apereo_inspektr_audit_support }}
+    fr.gouv.vitamui.cas: {{ cas_server.loging_level_fr_gouv_vitamui_cas }}
+    org.elasticsearch.metrics: {{ cas_server.loging_level_org_elasticsearch_metrics }}
+    fr.gouv.vitamui.commons: {{ cas_server.loging_level_fr_gouv_vitamui_commons }}
+
+{% if cas_server.cas_cors_enabled is sameas true %}
+# Cas CORS (necessary for mobile app)
+cas.http-web-request.cors.enabled: {{ cas_server.cas_cors_enabled | lower }}
+cas.http-web-request.cors.allow-credentials: {{ cas_server.cas_cors_allow_credentials | default(false) | lower }}
+cas.http-web-request.cors.allow-origins: {{ cas_server.cas_cors_allow_origins | default(['*']) | list | to_json }}
+cas.http-web-request.cors.allow-methods: {{ cas_server.cas_cors_allow_methods | default(['*']) | list | to_json }}
+cas.http-web-request.cors.allow-headers: {{ cas_server.cas_cors_allow_headers | default(['*']) | list | to_json }}
+cas.http-web-request.cors.allow-origin-patterns: {{ cas_server.cas_cors_allow_origin_patterns | default([]) | list | to_json }}
+{% endif %}
+
+# Password configuration
+password:
+  length: {{ vitamui_password_configurations.password.length | default('8') }}
+  max-old-password: {{ vitamui_password_configurations.password.max_old_password | default('3') }}
+{% if vitamui_password_configurations.password.check_occurrence is defined and vitamui_password_configurations.password.check_occurrence | lower == true %}
+  check-occurrence: true
+{% endif %}
+{% if vitamui_password_configurations.password.check_occurrence is defined and vitamui_password_configurations.password.check_occurrence == false and vitamui_password_configurations.password.profile == "anssi"  %}
+  check-occurrence: true
+  occurrences-chars-number: 3
+{% endif %}
+{% if vitamui_password_configurations.password.check_occurrence is undefined and vitamui_password_configurations.password.profile == "anssi" %}
+  check-occurrence: true
+  occurrences-chars-number: 3
+{% endif %}
+{% if vitamui_password_configurations.password.check_occurrence is defined and vitamui_password_configurations.password.check_occurrence == true and vitamui_password_configurations.password.profile == "anssi"%}
+  check-occurrence: true
+  occurrences-chars-number: {{ vitamui_password_configurations.password.occurrences_chars_number | default('3') }} # should be >=3
+{% endif %}
+{% if vitamui_password_configurations.password.check_occurrence is defined and vitamui_password_configurations.password.check_occurrence == true and vitamui_password_configurations.password.profile == "custom"%}
+  check-occurrence: true
+  occurrences-chars-number: {{ vitamui_password_configurations.password.occurrences_chars_number | default('3') }}
+{% endif %}
+{% if vitamui_password_configurations.password.profile is defined and vitamui_password_configurations.password.profile | lower != 'anssi' %}
+  profile: "custom"
+{% else %}
+  profile: "anssi"
+{% endif %}
+  constraints:
+{% if vitamui_password_configurations.password.constraints.defaults is defined and vitamui_password_configurations.password.profile == 'anssi' %}
+    defaults:
+{% if vitamui_password_configurations.password.profile == 'anssi' and vitamui_password_configurations.password.constraints.defaults.fr is defined %}
+      fr:
+          messages:
+{% for message in vitamui_password_configurations.password.constraints.defaults.fr.messages %}
+            - {{ message }}
+{% endfor %}
+          special-chars:
+               title: "{{ vitamui_password_configurations.password.constraints.defaults.fr.special_chars.title }}"
+               messages:
+{% for message in vitamui_password_configurations.password.constraints.defaults.fr.special_chars.messages %}
+                  - {{ message }}
+{% endfor %}
+{% endif %}
+{% if vitamui_password_configurations.password.profile == 'anssi' and vitamui_password_configurations.password.constraints.defaults.en is defined %}
+      en:
+          messages:
+{% for message in vitamui_password_configurations.password.constraints.defaults.en.messages %}
+            - {{ message }}
+{% endfor %}
+          special-chars:
+               title: "{{ vitamui_password_configurations.password.constraints.defaults.en.special_chars.title }}"
+               messages:
+{% for message in vitamui_password_configurations.password.constraints.defaults.en.special_chars.messages %}
+                  - {{ message }}
+{% endfor %}
+{% endif %}
+{% if vitamui_password_configurations.password.profile == 'anssi' and vitamui_password_configurations.password.constraints.defaults.de is defined %}
+      de:
+          messages:
+{% for message in vitamui_password_configurations.password.constraints.defaults.de.messages %}
+            - {{ message }}
+{% endfor %}
+          special-chars:
+               title: "{{ vitamui_password_configurations.password.constraints.defaults.de.special_chars.title }}"
+               messages:
+{% for message in vitamui_password_configurations.password.constraints.defaults.de.special_chars.messages %}
+                  - {{ message }}
+{% endfor %}
+{% endif %}
+{% else %}
+    customs:
+{% if vitamui_password_configurations.password.profile == 'custom' and vitamui_password_configurations.password.constraints.customs.fr is defined %}
+      fr:
+        title: "{{ vitamui_password_configurations.password.constraints.customs.fr.title }}"
+        messages:
+{% for message in vitamui_password_configurations.password.constraints.customs.fr.messages %}
+              - {{ message }}
+{% endfor %}
+{% endif %}
+{% if vitamui_password_configurations.password.profile == 'custom' and vitamui_password_configurations.password.constraints.customs.en is defined %}
+      en:
+        title: "{{ vitamui_password_configurations.password.constraints.customs.en.title }}"
+        messages:
+{% for message in vitamui_password_configurations.password.constraints.customs.en.messages %}
+              - {{ message }}
+{% endfor %}
+{% endif %}
+{% if vitamui_password_configurations.password.profile == 'custom' and vitamui_password_configurations.password.constraints.customs.de is defined %}
+      de:
+        title: "{{ vitamui_password_configurations.password.constraints.customs.de.title }}"
+        messages:
+{% for message in vitamui_password_configurations.password.constraints.customs.de.messages %}
+              - {{ message }}
+{% endfor %}
+{% endif %}
+{% endif %}
+
+app:
+  gateway:
+    iam:
+      name: iam-internal

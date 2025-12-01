@@ -1,0 +1,230 @@
+spring:
+  cloud:
+    consul:
+      enabled: true
+      host: localhost
+      discovery:
+        tags: archive-internal, api, internal, xam
+        preferIpAddress: true
+        ipAddress: 172.16.24.128
+        instance-id: archive-internal-dev-env
+        scheme: https
+        health-check-url: http://172.16.24.128:5014/actuator/health
+        health-check-tls-skip-verify: true
+    openfeign:
+      httpclient:
+        disable-ssl-validation: true
+      client:
+        config:
+          default:
+            loggerLevel: basic
+  data:
+    mongodb:
+      uri: "mongodb://api-archive:api-archive@172.16.24.128:27019/archive?connectTimeoutMS=2000"
+  mail:
+    test-connection: false
+    host: smtp-xam-int.xelians-dev.fr
+    port: 2525
+    username: no-reply.rabbit.dlab@xelians.fr
+    password: 
+    mail-from: no-reply-rabbit.dlab@xelians.fr
+    properties:
+      mail:
+        smtp:
+          auth: False
+          starttls:
+            enable: false
+  servlet:
+      multipart:
+        enabled: true
+        resolve-lazily: true
+        max-file-size: 1024MB
+        max-request-size: 1024MB
+
+sae:
+  type: hybrid
+  esafe:
+    organization:
+      id-strategy: RANDOM
+    url: https://esafe-integration.xelians-dev.fr
+    loggerLevel: FULL
+    security:
+      user:
+        username: root
+        api-key: xxxx
+  hybrid:
+    default-sae: vitam
+    tenant-mapping:
+      type: file
+      file:
+        path: /xelians-apps/data/iam_internal/tenant.json
+
+
+logging:
+  file:
+    name: /xelians-apps/logs/archive_internal/archive_internal.json.log
+  level:
+    fr.locarchives.dlab: DEBUG
+
+server:
+  forward-headers-strategy: framework
+  port: 6014
+  ssl:
+    key-store: "/xelians-apps/conf/archive_internal/keystore_archive-internal.jks"
+    key-store-password: "changeme"
+    key-password: "changeme"
+  max-http-request-header-size: 10KB
+  tomcat:
+    accesslog:
+        enabled: "false"
+        directory: "/xelians-apps/logs/archive_internal/"
+
+management:
+  opentelemetry:
+    resource-attributes:
+      deployment.environment: rabbit
+  otlp:
+    tracing:
+      endpoint: http://tracing.xelians-dev.fr:4318/v1/traces
+      export:
+        enabled: True
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      instance: 172.16.24.128
+      hostname: rabbit-xam
+      environment: rabbit
+  server:
+    port: 5014
+    ssl:
+      enabled: false
+
+
+token.api.iam: tokapiarchive_zA9w7gjJVmd0R4Vy
+
+fulltext.maximum.length: 65530
+fulltext.maximum.file.size: 94371840
+
+basket-params:
+  maxBasketsPerUser: 10
+  maxItemsPerBasket: 100
+
+system-tenant-identifier: 10
+
+ui-archive:
+  url: https://rabbit.xelians-dev.fr/archive
+  archive-app-path: archive/tenant
+
+portal:
+  url: "https://rabbit.xelians-dev.fr"
+
+scheduler:
+  numbering-order-reset:
+    cron-expression: 0 0 0 * * *
+  item-consultation:
+    cron-expression: 0 0 10 ? * MON
+    day-interval-threshold: 10
+  basket-expiration:
+    cron-expression: 0 0 10 ? * *
+    month-interval-expiration: 3
+  operation:
+    timeoutJob:
+      cronExpression: 0 0 * ? * *
+    obsolete:
+      cronExpression: 0 0 10 ? * *
+    retention-period: # in hours
+      terminated: 1
+      failed: 48
+display-extract-form:
+  extract-forms:
+    - type: RIA
+      first-field: RIA début
+      second-field: RIA fin
+      length: 22
+      mandatory: True
+      number-only: True
+
+integrity-attestation:
+  instance-operator-logo: instance-operator-logo.png
+  instance-operator: "Xelians"
+  product-name: "XELIANS ARCHIVES MANAGEMENT"
+  logo-nf: logo-nf.png
+  social-reason-1: "Siège social : 15 avenue Marcelin Berthelot - ZI du Val de Seine - 92396 Villeneuve la Garenne Cedex"
+  social-reason-2: "Tél. : 01 49 33 78 00 - RCS Nanterre - 450 943 204"
+
+folders:
+  assets: "/xelians-apps/conf/assets"
+
+holding.position:
+  max-virtual-unit-nodes-levels: 3
+
+workspace:
+  operationPath: "/xelians-apps/data/archive_internal/workspace/operations"
+  tempPath: "/xelians-apps/data/archive_internal/workspace/tmp"
+
+common.asyncTasks:
+  timeout: PT10M
+  delay: PT5S
+  poolSize: 50
+  awaitTerminationSeconds: 10
+  waitForTasksToCompleteOnShutdown: true
+
+vitam-async-task:
+  ingest-timeout: 30 # in minutes
+  export-timeout: 60 # in minutes
+
+#  Will set first host as primary and the rest will be disabled
+
+logbook:
+  scheduling:
+    enabled: True
+    sendEventToVitamTasks:
+      delay: 1000
+
+barcode:
+  client: RA
+  config:
+    pageWidth: 210 mm
+    pageHeight: 297 mm
+    leftMargin: 0 mm
+    rightMargin: 0 mm
+    topMargin: 0 mm
+    bottomMargin: 0 mm
+    verticalGap: 0 mm
+    horizontalGap: 0 mm
+    barcodeType: CODE_128
+    barcodeWidth: 70 mm
+    barcodeHeight: 25 mm
+    labelFontSize: 13F
+    codeFontSize: 10F
+    printCode: True
+    printBox: True
+    horizontalPrints: 2
+    verticalPrints: 4
+
+archive.item.maximum.size: 4294967296
+
+originating-referential:
+  import:
+    text-fields:
+      max-long-text-length: 5000
+      max-small-text-length: 150
+
+temp.directory.path: /tmp
+
+springdoc:
+  app:
+    openIdConnectUrl: https://rabbit.xelians-dev.fr/cas/oidc/.well-known/openid-configuration
+  swagger-ui:
+    oauth:
+      client-id: archive-swagger
+    enabled: True
+
+app:
+  gateway:
+    iam:
+      name: iam-internal
+    flow:
+      name: flow-internal
+    logistic:
+      name: logistic-internal

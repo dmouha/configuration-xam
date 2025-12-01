@@ -1,0 +1,466 @@
+spring:
+  cloud:
+    consul:
+      enabled: {{ consul.enabled | bool | lower }}
+      host: {{ consul.host }}
+      discovery:
+        ipAddress: {{ ip_service }}
+        tags: flow-internal, api, internal, xam
+        preferIpAddress: {{ consul.prefer_ip_address | bool | lower }}
+        instance-id: flow-internal-{{ inventory_hostname }}
+        scheme: https
+        health-check-url: {{ 'https' if flow_internal.management_server_ssl_enabled else 'http' }}://{{ ip_service }}:{{ flow_internal.management_server_port }}/actuator/health
+        health-check-tls-skip-verify: true
+    openfeign:
+      httpclient:
+        disable-ssl-validation: {{ openfeign.http_client.disable_ssl_validation | default('true') }}
+      client:
+        config:
+          default:
+            loggerLevel: {{ openfeign.client.config.default.logger_level | default('basic') }}
+  data:
+    mongodb:
+      uri: "mongodb://{{ mongodb.flow.user }}:{{ mongodb.flow.password }}@{{ mongodb.hosts }}/{{mongodb.flow.db }}?connectTimeoutMS={{mongod_client_connect_timeout_ms}}"
+  mail:
+    test-connection: False
+    host: {{ smtp.host }}
+    port: {{ smtp.port }}
+    username: {{ smtp.username }}
+    password: {{ smtp.password }}
+    mail-from: {{ smtp.mail_from }}
+    properties:
+      mail:
+        smtp:
+          auth: {{ smtp.auth }}
+          starttls:
+            enable: {{ smtp.enable_starttls | bool | lower }}
+{% if flow_internal.mail_cc is defined %}
+    mail-cc: {{ flow_internal.mail_cc }}
+{% endif %}
+
+{% if activemq.in_memory is sameas true %}
+  activemq:
+    in-memory: true
+{% else %}
+  activemq:
+    broker-url: failover:{{ ['tcp://'] | product(groups['activemq']| map('extract', hostvars, ['ansible_ssh_host']) | list ) | map('join') | list | join (':' + activemq.server_port | string + ',')}}:{{activemq.server_port}}
+    user: {{ activemq.user }}
+    password: {{ activemq.password }}
+{% endif %}
+{% if sae is defined and (sae.type == 'esafe' or sae.type == 'hybrid') %}
+  security:
+    oauth2:
+      client:
+        provider:
+          esafe:
+            authorization-uri: {{ sae.esafe.url }}/oauth2/authorize
+            token-uri: {{ sae.esafe.url }}/oauth2/token
+            user-info-uri: {{ sae.esafe.url }}/userinfo
+            jwk-set-uri: {{ sae.esafe.url }}/oauth2/jwks
+        registration:
+          xam:
+            client-id: {{ sae.esafe.security.oauth2.client.client_id }}
+            client-secret: {{ sae.esafe.security.oauth2.client.client_secret }}
+            client-authentication-method: client_secret_post
+            authorization-grant-type: access_key          
+            scope: openid
+            provider: esafe
+
+sae:
+  type: {{ sae.type }}
+  esafe:
+    organization:
+      id-strategy: {{ sae.esafe.organization.id_strategy | default('SEQUENCE') }}
+    url: {{ sae.esafe.url }}
+    loggerLevel: {{ sae.esafe.logger_level | default('basic') }}
+    security:
+      oauth2:
+        client:
+          registration-id: {{ sae.esafe.security.oauth2.client.registration_id }}
+      user:
+        name: {{ sae.esafe.security.user.name }}
+        access-key: {{ sae.esafe.security.user.access_key }}
+  hybrid:
+    default-sae: {{ sae.hybrid.default | default('vitam') }}
+    tenant-mapping:
+      type: file
+      file:
+        path: {{sae.hybrid.tenant_mapping.file.path}}
+
+{% endif %}
+
+logging:
+  file:
+    name: {{ springboot_root_path }}/{{ springboot_log_dir }}/{{ springboot_name }}/{{ springboot_name }}.json.log
+  level:
+    fr.locarchives.dlab: {{ logging.level | default('INFO') }}
+
+server:
+  forward-headers-strategy: framework
+  port: {{ flow_internal.server_port }}
+  ssl:
+    key-store: "{{ springboot_root_path }}/{{ springboot_conf_dir }}/{{ springboot_name }}/{{ flow_internal.server_ssl_keystore_filename }}"
+    key-store-password: {{ flow_internal.server_ssl_keystore_password }}
+    key-password: {{ flow_internal.server_ssl_key_password }}
+  max-http-request-header-size: {{ flow_internal.server_max_http_header_size }}
+  tomcat:
+    accesslog:
+        enabled: "{{ flow_internal.server_tomcat_enabled }}"
+        directory: "{{ springboot_root_path }}/{{ springboot_log_dir }}/{{ springboot_name }}/"
+
+management:
+{% if tracing.enabled  is sameas true %}
+  opentelemetry:
+    resource-attributes:
+      deployment.environment: {{ current_env }}
+  otlp:
+    tracing:
+      endpoint: {{ tracing.otp_collector_endpoint | default('127.0.0.1') }}
+      export:
+        enabled: {{ tracing.enabled | default(false)  }}
+{% endif %}
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      instance: {{ hostvars[inventory_hostname]['ip_service'] }}
+      hostname: {{ ansible_hostname }}
+      environment: {{ current_env }}
+  server:
+    port: {{ flow_internal.management_server_port }}
+    ssl:
+      enabled: {{ flow_internal.management_server_ssl_enabled | bool | lower }}
+
+
+security:
+ system:
+   identity: {{ security.system_identity }}
+   applicationId: {{ security.system_applicationId }}
+   token: {{ flow_internal.token_api }}
+   userId: {{ security.system_userId }}
+
+
+flow-internal:
+  iam-internal-client:
+    server-host: {{ iam_internal.server_host }}
+    server-port: {{ iam_internal.server_port }}
+    secure: {{ iam_internal.server_secure | bool | lower }}
+    ssl-configuration:
+      truststore:
+        key-path: "{{ springboot_root_path }}/{{ springboot_conf_dir }}/{{ springboot_name }}/{{ flow_internal.server_ssl_truststore_filename }}"
+        key-password: {{ flow_internal.server_ssl_truststore_password }}
+      hostname-verification: "{{ iam_internal.hostname_verification | bool | lower }}"
+  archive-client:
+    server-host: {{ archive_internal.server_host }}
+    server-port: {{ archive_internal.server_port }}
+    secure: {{ archive_internal.server_secure | bool | lower }}
+    ssl-configuration:
+      truststore:
+        key-path: "{{ springboot_root_path }}/{{ springboot_conf_dir }}/{{ springboot_name }}/{{ flow_internal.server_ssl_truststore_filename }}"
+        key-password: {{ flow_internal.server_ssl_truststore_password }}
+        type: JKS
+      hostname-verification: "{{ archive_internal.hostname_verification | bool | lower }}"
+{% if logistic_internal.enabled is sameas true %}
+  logistic-internal-client:
+    server-host: {{ logistic_internal.server_host }}
+    server-port: {{ logistic_internal.server_port }}
+    secure: {{ logistic_internal.server_secure | bool | lower }}
+    connect-timeOut: {{ logistic_internal.connect_timeOut }}
+    read-timeOut: {{ logistic_internal.read_timeOut }}
+    write-timeOut: {{ logistic_internal.write_timeOut }}
+    ssl-configuration:
+      truststore:
+        key-path: "{{ springboot_root_path }}/{{ springboot_conf_dir }}/{{ springboot_name }}/{{ flow_internal.server_ssl_truststore_filename }}"
+        key-password: {{ flow_internal.server_ssl_truststore_password }}
+        type: JKS
+      hostname-verification: "{{ logistic_internal.hostname_verification | bool | lower }}"
+{% endif %}
+{% if interco_client.enable is sameas true %}
+  interco-client:
+    server-host: {{ interco_client.server_host }}
+    server-port: {{ interco_client.server_port }}
+    secure: {{ interco_client.server_secure | bool | lower }}
+    no-client-authentication: {{ interco_client.no_client_authentication }}
+    connect-timeOut: {{ interco_client.connect_timeOut }}
+    read-timeOut: {{ interco_client.read_timeOut }}
+    write-timeOut: {{ interco_client.write_timeOut }}
+    ssl-configuration:
+      truststore:
+        key-path: "{{ springboot_root_path }}/{{ springboot_conf_dir }}/{{ springboot_name }}/{{ flow_internal.server_ssl_truststore_filename }}"
+        key-password: {{ flow_internal.server_ssl_truststore_password }}
+        type: JKS
+      hostname-verification: "{{ interco_client.hostname_verification | bool | lower }}"
+{% if interco_client.proxy.enable is sameas true %}
+    proxy:
+      enabled: true
+      host: {{ proxy_dns }}
+      port: {{ proxy_port }}
+{% if interco_client.proxy.auth is sameas true %}
+      username: {{ proxy_user }}
+      password: {{ proxy_password }}
+{% endif %}
+{% endif %}
+{% endif %}
+{% if bnpp_xam_client.enable is sameas true %}
+  bnpp-client:
+    server-host: {{ bnpp_xam_client.server_host }}
+    server-port: {{ bnpp_xam_client.server_port }}
+    secure: {{ bnpp_xam_client.server_secure | bool | lower }}
+    tenant: {{ bnpp_xam_client.tenant }}
+    ssl-configuration:
+      truststore:
+        key-path: "{{ springboot_root_path }}/{{ springboot_conf_dir }}/{{ springboot_name }}/{{ flow_internal.server_ssl_truststore_filename }}"
+        key-password: {{ flow_internal.server_ssl_truststore_password }}
+        type: JKS
+      hostname-verification: "{{ bnpp_xam_client.hostname_verification | bool | lower }}"
+    cas:
+      context-path: {{ bnpp_xam_client.cas.context_path }}
+      username: {{ bnpp_xam_client.cas.username }}
+      password: {{ bnpp_xam_client.cas.password }}
+      grant-type: {{ bnpp_xam_client.cas.grant_type }}
+      client-id: {{ bnpp_xam_client.cas.client_id }}
+      client-secret: {{ bnpp_xam_client.cas.client_secret }}
+{% endif %}
+{% if secure_transfer.enable is sameas true %}
+  secure-transfer-client:
+    server-host: {{ secure_transfer_client.server_host }}
+    server-port: {{ secure_transfer_client.server_port }}
+    secure: {{ secure_transfer_client.server_secure | bool | lower }}
+    no-client-authentication: {{ secure_transfer_client.no_client_authentication }}
+    connect-timeOut: {{ secure_transfer_client.connect_timeOut }}
+    read-timeOut: {{ secure_transfer_client.read_timeOut }}
+    write-timeOut: {{ secure_transfer_client.write_timeOut }}
+    ssl-configuration:
+      truststore:
+        key-path: "{{ springboot_root_path }}/{{ springboot_conf_dir }}/{{ springboot_name }}/{{ flow_internal.server_ssl_truststore_filename }}"
+        key-password: {{ flow_internal.server_ssl_truststore_password }}
+        type: JKS
+      hostname-verification: "{{ secure_transfer_client.hostname_verification | bool | lower }}"
+{% if secure_transfer_client.proxy.enable is sameas true %}
+    proxy:
+      enabled: true
+      host: {{ proxy_dns }}
+      port: {{ proxy_port }}
+{% if secure_transfer_client.proxy.auth is sameas true %}
+      username: {{ proxy_user }}
+      password: {{ proxy_password }}
+{% endif %}
+{% endif %}
+{% endif %}
+
+{% if interco_client.enable is sameas true %}
+interco:
+  token: {{ interco_client.token }}
+  context: {{ interco_client.context }}
+{% endif %}
+
+{% if armoni_client.enable is sameas true %}
+armoni:
+  server-host:  {{ armoni_client.cas.url }}
+  server-port: 443
+  secure: true
+  ssl-configuration:
+    truststore:
+      key-path: "{{ springboot_root_path }}/{{ springboot_conf_dir }}/{{ springboot_name }}/{{ flow_internal.server_ssl_truststore_filename }}"
+      key-password: {{ flow_internal.server_ssl_truststore_password }}
+      type: JKS
+    hostname-verification: false
+  cas:
+    url: {{ armoni_client.cas.url }}
+    auth-api-path: {{ armoni_client.cas.auth_api_path }}
+    client-id: {{ armoni_client.cas.client_id }}
+    client-secret: {{ armoni_client.cas.client_secret }}
+    grant-type: {{ armoni_client.cas.grant_type }}
+    username: {{ armoni_client.cas.username }}
+    password: {{ armoni_client.cas.password }}
+  syncStatusRetentionInHours: 1
+  api:
+    url: {{ armoni_client.api.url }}
+  async-api:
+    url: {{ armoni_client.async_api.url }}
+  code-range-api:
+    url: {{ armoni_client.code_range_api.url }}
+  upcoming-logistic-unit-api:
+    url: {{ armoni_client.upcoming_logistic_unit_api.url }}
+  owners-api:
+    url: {{ armoni_client.owners_api.url }}
+  logistic-units-api:
+    url: {{ armoni_client.logistic_units_api.url }}
+  series-api:
+    url: {{ armoni_client.series_api.url }}
+
+{% endif %}
+
+platform-informations:
+  name: "{{ dlab_platform_informations.name }}"
+  theme:
+    header-logo: "{{ ui_flow.header_logo | default(ui_portal.header_logo) }}"
+
+folders:
+  assets: "{{ dlab_assets }}"
+
+workspace:
+  itemPath: "{{ springboot_root_path }}/{{ springboot_data_dir }}/{{ springboot_name }}/workspace/item"
+  operationPath: "{{ springboot_root_path }}/{{ springboot_data_dir }}/{{ springboot_name }}/workspace/opertations"
+  tempPath: "{{ springboot_root_path }}/{{ springboot_data_dir }}/{{ springboot_name }}/workspace/tmp"
+
+operation:
+   folder:
+   vitam:
+      cronExpression: 0/30 * * * * ?
+
+workflow:
+  transfer:
+    disposal:
+      cronExpression: 0/30 * * * * ?
+    ingest:
+      cronExpression: 0/30 * * * * ?
+  accessItem:
+    dexto:
+      cronExpression: 0/30 * * * * ?
+  operation:
+    cronExpression: 0/30 * * * * ?
+
+item:
+  unit:
+    limit:
+      creation: 1000
+      total: 10000
+      disposal-creation: {{ flow_internal.disposal_creation }}
+      disposal-total: {{ flow_internal.disposal_total }}
+
+index-item-documents:
+  maximum-document-number: {{ index_item.max_nb_documents }}
+  maximum-document-size: {{ index_item.max_size_by_document }}
+  maximum-total-document-size: {{ index_item.max_size_total }}
+
+maximum-sip-size: {{ sip_ingest_max_size_in_bytes}}
+
+qrcode:
+  casUrl: "{{ cas_server.external_url }}"
+  flowUrl: "https://{{ ui_flow.server_name }}/flow/flow-api"
+  dev:
+    enabled: {{ qr_code.dev.enabled }}
+    defaultPassword: {{ qr_code.dev.defaultPassword }}
+    defaultLogin: {{ qr_code.dev.defaultLogin }}
+    environment: {{ current_env }}
+
+scheduler:
+  itemConsultation:
+    dayIntervalThreshold: {{ flow.scheduler.itemConsultation.dayIntervalThreshold }}
+  flowStatus:
+    cronExpression: {{ flow.scheduler.flowStatus.cronExpression }}
+  itemCleaning:
+    cronExpression: {{ flow.scheduler.itemCleaning.cronExpression }}
+    retentionPeriod: {{ flow.scheduler.itemCleaning.retentionPeriod }}
+    limit: {{ flow.scheduler.itemCleaning.limit }}
+  operation:
+    timeoutJob:
+      cronExpression: {{ flow.scheduler.operation.timeoutJob.cronExpression }}
+    obsolete:
+      cronExpression: {{ flow.scheduler.operation.obsolete.cronExpression }}
+    vitamOperation:
+      cronExpression: {{ flow.scheduler.operation.vitamOperation.cronExpression }}
+  uploadDocumentsCleaning:
+       cronExpression: {{ flow.scheduler.uploadDocumentsCleaning.cronExpression }}
+       retentionTimeInMilliseconds: {{ flow.scheduler.uploadDocumentsCleaning.retentionTimeInMilliseconds }}
+  unitCleaning:
+    cronExpression: {{ flow.scheduler.unitCleaning.cronExpression }}
+    retentionTimeInDay: {{ flow.scheduler.unitCleaning.retentionTimeInDay }}
+  blockedItem:
+    cronExpression: {{ flow.scheduler.blockedItem.cronExpression }}
+    maxDelayBlocked: {{ flow.scheduler.blockedItem.maxDelayBlocked }}
+  itemUserAlerts:
+    cronExpression: {{ flow.scheduler.itemUserAlerts.cronExpression }}
+    maxAlertsPerUser: {{ flow.scheduler.itemUserAlerts.maxAlertsPerUser}}
+  armoniSync:
+    enabled: {{ flow.scheduler.armoniSync.enabled | default(false) }}
+    cronExpression: {{ flow.scheduler.armoniSync.cronExpression }}
+  itemDocumentCleaning:
+    cronExpression: {{ flow.scheduler.itemDocumentCleaning.cronExpression }}
+    maxDelayItemDocumentCleaning: {{ flow.scheduler.itemDocumentCleaning.maxDelayItemDocumentCleaning }}
+
+
+#  Will set first host as primary and the rest will be disabled
+{% if inventory_hostname != groups['flow_internal']|first%}
+# By default is true
+instance:
+  primary: false
+{% endif %}
+
+logbook:
+  scheduling:
+    enabled: {{ flow_internal.logbook_scheduling_enabled  }}
+    sendEventToVitamTasks:
+      delay: {{ flow_internal.logbook_scheduling_delay }}
+
+timer.period: 30000
+spring.activemq.packages.trusted: fr.locarchives.dlab, fr.gouv.vitamui, java
+spring.files.workspace: ~/workspace/flow
+
+fulltext.maximum.length: {{ fulltext_maximum_length }}
+fulltext.maximum.file.size: {{ fulltext_maximum_file_size }}
+
+ui-flow:
+  url: "{{ ui_flow.base_url }}"
+  my-activity-item-explorer-path: "items"
+  customer-item: "customer-item/item"
+  explorer-path: "explorer"
+  my-activity: "activity"
+  vitamui-primary: "{{ theme.vitamui_primary }}"
+
+{% if flow_internal.user_support is defined %}
+user-support:
+  email: {{ flow_internal.user_support.email }}
+{% endif %}
+
+barcode:
+  client: {{ barcode.client }}
+  config:
+    pageWidth: {{ barcode.config_pageWidth }}
+    pageHeight: {{ barcode.config_pageHeight }}
+    leftMargin: {{ barcode.config_leftMargin }}
+    rightMargin: {{ barcode.config_rightMargin }}
+    topMargin: {{ barcode.config_topMargin }}
+    bottomMargin: {{ barcode.config_bottomMargin }}
+    verticalGap: {{ barcode.config_verticalGap }}
+    horizontalGap: {{ barcode.config_horizontalGap }}
+    barcodeType: {{ barcode.config_barcodeType }}
+    barcodeWidth: {{ barcode.config_barcodeWidth }}
+    barcodeHeight: {{ barcode.config_barcodeHeight }}
+    labelFontSize: {{ barcode.config_labelFontSize }}
+    codeFontSize: {{ barcode.config_codeFontSize }}
+    printCode: {{ barcode.config_printCode }}
+    printBox: {{ barcode.config_printBox }}
+    horizontalPrints: {{ barcode.config_horizontalPrints }}
+    verticalPrints: {{ barcode.config_verticalPrints }}
+
+{% if secure_transfer.enable is sameas true %}
+secure-transfer:
+  email: {{ secure_transfer.email }}
+  password: {{ secure_transfer.password }}
+{% endif %}
+
+{% if cups_printing_server is defined  and cups_printing_server.enabled is sameas true %}
+cups-printing-server:
+  host: {{ cups_printing_server.host }}
+  port: {{ cups_printing_server.port }}
+  userName: {{ cups_printing_server.user_name }}
+  password: {{ cups_printing_server.password }}
+{% endif %}
+
+springdoc:
+  app:
+    openIdConnectUrl: {{ cas_server.cas_server_prefix }}/oidc/.well-known/openid-configuration
+  swagger-ui:
+    oauth:
+      client-id: flow-swagger
+    enabled: {{swagger_enabled | default(false)}}
+
+app:
+  gateway:
+    iam:
+      name: iam-internal
+    archive:
+      name: archive-internal
+    logistic:
+      name: logistic-internal

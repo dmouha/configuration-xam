@@ -1,0 +1,152 @@
+spring:
+  cloud:
+    consul:
+      enabled: true
+      host: localhost
+      discovery:
+        ipAddress: 172.16.24.39
+        tags: reporting-internal, api, internal, xam
+        preferIpAddress: true
+        instance-id: reporting-internal-dev-env
+        scheme: https
+        health-check-url: http://172.16.24.39:5010/actuator/health
+        health-check-tls-skip-verify: true
+    openfeign:
+      httpclient:
+        disable-ssl-validation: true
+      client:
+        config:
+          default:
+            loggerLevel: basic
+  data:
+    mongodb:
+      uri: "mongodb://reporting:reporting@172.16.24.39:27019/reporting?connectTimeoutMS=2000"
+
+sae:
+  type: hybrid
+  esafe:
+    organization:
+      id-strategy: RANDOM
+    url: https://esafe-integration.xelians-dev.fr
+    loggerLevel: FULL
+    security:
+      user:
+        username: root
+        api-key: xxxx
+  hybrid:
+    default-sae: vitam
+    tenant-mapping:
+      type: file
+      file:
+        path: /xelians-apps/data/iam_internal/tenant.json
+
+
+server:
+  forward-headers-strategy: framework
+  port: 6010
+  ssl:
+    key-store: "/xelians-apps/conf/reporting_internal/keystore_reporting-internal.jks"
+    key-store-password: changeme
+    key-password: changeme
+  max-http-request-header-size: 10KB
+  tomcat:
+    accesslog:
+        enabled: "False"
+        directory: "/xelians-apps/logs/reporting_internal/"
+
+management:
+  opentelemetry:
+    resource-attributes:
+      deployment.environment: crocodile
+  otlp:
+    tracing:
+      endpoint: http://tracing.xelians-dev.fr:4318/v1/traces
+      export:
+        enabled: True
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      instance: 172.16.24.39
+      hostname: crocodile-xam
+      environment: crocodile
+
+  server:
+    port: 5010
+    ssl:
+      enabled: false
+
+logging:
+  file:
+    name: /xelians-apps/logs/reporting_internal/reporting_internal.json.log
+  level:
+    fr.locarchives.dlab: DEBUG
+    fr.gouv.vitamui.referential.internal.server: INFO
+
+security:
+ system:
+   identity: api-flow-internal
+   applicationId: api-flow-internal
+   token: tokapiflow_x2wiZu3B5grvDfVH
+   userId: apiflowuser
+
+
+reporting-internal:
+  archive-client:
+    server-host: archive-internal.service.consul
+    server-port: 6014
+    secure: true
+    ssl-configuration:
+      truststore:
+        key-path: "/xelians-apps/conf/reporting_internal/truststore_server.jks"
+        key-password: changeme
+      hostname-verification: "false"
+  iam-internal-client:
+    server-host: iam-internal.service.consul
+    server-port: 6003
+    secure: true
+    ssl-configuration:
+      truststore:
+        key-path: "/xelians-apps/conf/reporting_internal/truststore_server.jks"
+        key-password: changeme
+      hostname-verification: "false"
+  flow-internal-client:
+    server-host: flow-internal.service.consul
+    server-port: 6018
+    secure: true
+    read-time-out: 300
+    write-time-out: 300
+    ssl-configuration:
+      truststore:
+        key-path: "/xelians-apps/conf/reporting_internal/truststore_server.jks"
+        key-password: changeme
+      hostname-verification: "false"
+
+tenants-to-exclude : -1, 1, 20, 27, 10, 11, 10, 11, 102, 103, 104, 105, 106 
+job :
+  launch-on-startup: False
+  reporting-data-for-current-day: False
+  number-of-days-to-catch-up: 1
+  stock :
+    cronExpression : 0 0 10 ? * *
+    zone : Europe/Paris
+    chunk: 10
+    maximum-years: 10
+
+#  Will set first host as primary and the rest will be disabled
+
+springdoc:
+  app:
+    openIdConnectUrl: https://crocodile.xelians-dev.fr/cas/oidc/.well-known/openid-configuration
+  swagger-ui:
+    oauth:
+      client-id: reporting-swagger
+    enabled: True
+
+app:
+  gateway:
+    iam:
+      name: iam-internal
+    archive:
+      name: archive-internal
+    flow:
+      name: flow-internal

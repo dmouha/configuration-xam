@@ -1,0 +1,522 @@
+server:
+  port: {{ gateway.server_port }}
+  ssl:
+    key-store: {{ springboot_root_path }}/{{ springboot_conf_dir }}/{{ springboot_name }}/{{ gateway.server_ssl_keystore_filename }}
+    key-store-password: {{ gateway.server_ssl_keystore_password }}
+    key-password: {{ gateway.server_ssl_key_password }}
+  max-http-request-header-size: {{ gateway.server_max_http_header_size }}
+  tomcat:
+    accesslog:
+        enabled: "{{ gateway.server_tomcat_enabled | bool | lower }}"
+        directory: "{{ springboot_root_path }}/{{ springboot_log_dir }}/{{ springboot_name }}"
+
+management:
+{% if tracing.enabled  is sameas true %}
+  opentelemetry:
+    resource-attributes:
+      deployment.environment: {{ current_env }}
+  otlp:
+    tracing:
+      endpoint: {{ tracing.otp_collector_endpoint | default('127.0.0.1') }}
+      export:
+        enabled: {{ tracing.enabled | default(false)  }}
+{% endif %}
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      instance: {{ hostvars[inventory_hostname]['ip_service'] }}
+      hostname: {{ ansible_hostname }}
+      environment: {{ current_env }}
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  server:
+    port: {{ gateway.management_server_port }}
+    ssl:
+      enabled: {{ gateway.management_server_ssl_enabled | bool | lower }}
+
+security:
+  client-certificate-header-name: {{ gateway.client_certificate_header_name }}
+
+spring:
+  application:
+    name: gateway-server
+  cloud:
+    config:
+      enabled: false
+    discovery:
+      enabled: false
+    gateway:
+      httpserver:
+        wiretap: false
+      httpclient:
+        wiretap: false
+        ssl:
+          #key-store: "{{ springboot_root_path }}/{{ springboot_conf_dir }}/{{ springboot_name }}/{{ gateway.client_ssl_keystore_filename }}"
+          #key-store-password: "{{ gateway.client_ssl_keystore_password }}"
+          #key-password: "{{ gateway.client_ssl_key_password }}"
+          #key-store-type: JKS
+          use-insecure-trust-manager: true
+          #trusted-x509-certificates:
+      default-filters:
+        - DedupeResponseHeader=Vary, RETAIN_UNIQUE
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Methods Access-Control-Allow-Headers
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+            - "https://{{ server_name }}"
+            - "http://localhost"
+            - "https://localhost"
+            {%- if gateway.allowed_origin_patterns is defined and gateway.allowed_origin_patterns | length > 0 +%}
+            allowed-origin-patterns:
+            {%- for pattern in gateway.allowed_origin_patterns +%}
+            - "{{ pattern }}"
+            {%- endfor -%}
+            {%- endif +%}
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            maxAge: 1800
+      routes:
+        - id: iam-internal-service
+          uri: {{ 'https' if iam_internal.server_secure | bool else 'http' }}://{{ iam_internal.server_host }}:{{ iam_internal.server_port }}
+          predicates:
+            - >
+              Path=
+              /portal-api/security,
+              /portal-api/userinfos/me,
+              /portal-api/ui/applications/**,
+              /portal-api/users/analytics,
+              /portal-api/subrogations/**,
+              /portal-api/incidentreport/**,
+
+              /identity-api/security,
+              /identity-api/userinfos/**,
+              /identity-api/ui/applications/**,
+              /identity-api/subrogations/**,
+              /identity-api/customers/**,
+              /identity-api/tenants/**,
+              /identity-api/owners/**,
+              /identity-api/providers/**,
+              /identity-api/groups/**,
+              /identity-api/users/**,
+              /identity-api/profiles/**,
+              /identity-api/accesscontracts/**,
+              /identity-api/externalparamprofile/**,
+              /identity-api/incidentreport/**,
+
+              /referential-api/security$,
+              /referential-api/security/**,
+              /referential-api/userinfos/**,
+              /referential-api/ui/applications/**,
+              /referential-api/users/analytics,
+              /referential-api/subrogations/**,
+              /referential-api/logbooks/operations/**,
+              /referential-api/tenants/**,
+              /referential-api/customers/**,
+              /referential-api/accesscontracts/**,
+              /referential-api/profiles/**,
+              /referential-api/externalparameters/**,
+              /referential-api/incidentreport/**,
+
+              /archive-api/ui/**,
+              /archive-api/security,
+              /archive-api/userinfos/me,
+              /archive-api/users/**,
+              /archive-api/profiles/**,
+              /archive-api/customers/**,
+              /archive-api/tenants/**,
+              /archive-api/logbooks/**,
+              /archive-api/subrogations/**,
+              /archive-api/owners/**,
+              /archive-api/incidentreport/**,
+
+              /flow-api/security,
+              /flow-api/userinfos/me,
+              /flow-api/ui/applications/**,
+              /flow-api/users/**,
+              /flow-api/subrogations/**,
+              /flow-api/logbooks/operations/**,
+              /flow-api/tenants/**,
+              /flow-api/customers/**,
+              /flow-api/accesscontracts/**,
+              /flow-api/profiles/**,
+              /flow-api/incidentreport/**,
+
+              /reporting-api/security,
+              /reporting-api/ui/**,
+              /reporting-api/userinfos/me,
+              /reporting-api/users/analytics,
+              /reporting-api/subrogations/**,
+              /reporting-api/incidentreport/**,
+
+              /logistic-api/security,
+              /logistic-api/ui/**,
+              /logistic-api/userinfos/me,
+              /logistic-api/users/**,
+              /logistic-api/subrogations/**,
+              /logistic-api/profiles/**,
+              /logistic-api/incidentreport/**,
+
+              /wms-api/security/**,
+              /wms-api/userinfos/**,
+              /wms-api/ui/**,
+              /wms-api/tenants/**,
+              /wms-api/customers/**,
+              /wms-api/profiles/**,
+              /wms-api/users/**,
+              /wms-api/incidentreport/**,
+
+              /provisioning-api/security,
+              /provisioning-api/ui/**,
+              /provisioning-api/userinfos/me,
+              /provisioning-api/users/**,
+              /provisioning-api/groups/**,
+              /provisioning-api/customers/**,
+              /provisioning-api/tenants/**,
+              /provisioning-api/subrogations/**,
+              /provisioning-api/incidentreport/**
+
+          filters:
+            # Portal IAM API
+            - RewritePath=/portal-api/ui/(?<segment>.*),/iam/v1/$\{segment}
+            - RewritePath=/portal-api/(?<segment>.*),/iam/v1/$\{segment}
+
+            # Identity IAM API
+            - RewritePath=/identity-api/ui/(?<segment>.*),/iam/v1/$\{segment}
+            - RewritePath=/identity-api/logbooks(?<segment>.*),/v1/logbooks$\{segment},
+            - RewritePath=/identity-api/accesscontracts(?<segment>.*),/v1/accesscontracts$\{segment},
+            - RewritePath=/identity-api/(?<segment>.*),/iam/v1/$\{segment}
+
+            # Referential IAM API
+            - RewritePath=/referential-api/ui/(?<segment>.*),/iam/v1/$\{segment}
+            - RewritePath=/referential-api/externalparameters(?<segment>.*),/iam/v1/externalparameters/me$\{segment},
+            - RewritePath=/referential-api/logbooks/operations(?<segment>.*),/v1/logbooks/operations$\{segment},
+            - RewritePath=/referential-api/(?<segment>.*),/iam/v1/$\{segment}
+
+            # Flow IAM API
+            - RewritePath=/flow-api/logbooks/(?<segment>.*),/v1/logbooks/$\{segment}
+            - RewritePath=/flow-api/accesscontracts/(?<segment>.*),/v1/accesscontracts/$\{segment}
+            - RewritePath=/flow-api/ui/(?<segment>.*),/iam/v1/$\{segment}
+            - RewritePath=/flow-api/(?<segment>.*),/iam/v1/$\{segment}
+
+            # Reporting IAM API
+            - RewritePath=/reporting-api/ui(?<segment>.*),/iam/v1$\{segment}
+            - RewritePath=/reporting-api/(?<segment>.*),/iam/v1/$\{segment}
+
+            # Logistic IAM API
+            - RewritePath=/logistic-api/ui(?<segment>.*),/iam/v1$\{segment}
+            - RewritePath=/logistic-api/(?<segment>.*),/iam/v1/$\{segment}
+
+            # Archive IAM API
+            - RewritePath=/archive-api/ui(?<segment>.*),/iam/v1$\{segment}
+            - RewritePath=/archive-api/logbooks(?<segment>.*),/v1/logbooks/$\{segment}
+            - RewritePath=/archive-api/(?<segment>.*),/iam/v1/$\{segment}
+
+            # WMS IAM API
+            - RewritePath=/wms-api/ui(?<segment>.*),/iam/v1$\{segment}
+            - RewritePath=/wms-api/(?<segment>.*),/iam/v1/$\{segment}
+
+            # Provisioning IAM API
+            - RewritePath=/provisioning-api/ui(?<segment>.*),/iam/v1$\{segment}
+            - RewritePath=/provisioning-api/(?<segment>.*),/iam/v1/$\{segment}
+
+        - id: referential-internal-service
+          uri: {{ 'https' if referential_internal.server_secure | bool else 'http' }}://{{ referential_internal.server_host }}:{{ referential_internal.server_port }}
+          predicates:
+            - >
+              Path=
+              /referential-api/accesscontract/**,
+              /referential-api/ingestcontract/**,
+              /referential-api/management-contract/**,
+              /referential-api/agency/**,
+              /referential-api/fileformat/**,
+              /referential-api/accession-register/**,
+              /referential-api/profile/**,
+              /referential-api/search/**,
+              /referential-api/static/**,
+              /referential-api/operation/**,
+              /referential-api/logbook-management-operation/**,
+              /referential-api/archival-profile/**,
+
+              /archive-api/context/**,
+              /archive-api/accession-register/**
+
+          filters:
+            - RewritePath=/referential-api/fileformat(?<segment>.*),/referential/v1/fileformats$\{segment}
+            - RewritePath=/referential-api/search/filingplan(?<segment>.*),/units/filingplan$\{segment}
+            - RewritePath=/referential-api/search/units(?<segment>.*),/units$\{segment}
+            - RewritePath=/referential-api/operation(?<segment>.*),/referential/v1/operations$\{segment}
+            - RewritePath=/referential-api/static(?<segment>.*),$\{segment}
+            - RewritePath=/referential-api(?<segment>.*),/referential/v1$\{segment}
+
+            # Archive Referential API
+            - RewritePath=/archive-api/context(?<segment>.*),/referential/v1/context$\{segment}
+            - RewritePath=/archive-api/accession-register(?<segment>.*),/referential/v1/accession-register$\{segment}
+
+        - id: archive-internal-service
+          uri: {{ 'https' if archive_internal.server_secure | bool else 'http' }}://{{ archive_internal.server_host }}:{{ archive_internal.server_port }}
+          predicates:
+            - >
+              Path=
+              /portal-api/tenantarchiveparams/**,
+
+              /flow-api/archive-holding/**,
+              /flow-api/tenantarchiveparams/**,
+              /flow-api/v2/archivetypes/**,
+              /flow-api/archivelifecycle/**,
+              /flow-api/logbooks/operations/**,
+              /flow-api/search/stickers/**,
+
+              /logistic-api/customerarchiveparams,
+
+              /referential-api/archive/operations/**,
+
+              /archive-api/search/**,
+              /archive-api/download/**,
+              /archive-api/objects/**,
+              /archive-api/accesscontracts/**,
+              /archive-api/archivalprofiles/**,
+              /archive-api/archivalunitprofiles/**,
+              /archive-api/archivelifecycle/**,
+              /archive-api/archivetypes/**,
+              /archive-api/archivetypesedafields/**,
+              /archive-api/barcodes/**,
+              /archive-api/archiveparams/**,
+              /archive-api/basket/**,
+              /archive-api/customerarchiveparams/**,
+              /archive-api/dips/**,
+              /archive-api/tenant-holding/**,
+              /archive-api/holding/**,
+              /archive-api/archive-holding/**,
+              /archive-api/ingestcontracts/**,
+              /archive-api/ingest/**,
+              /archive-api/metadata/**,
+              /archive-api/objects/**,
+              /archive-api/units/**,
+              /archive-api/operations/**,
+              /archive-api/profiles/**,
+              /archive-api/tenantarchiveparams/**,
+              /archive-api/thirdpartyarchiveoperators/**,
+              /archive-api/agencies/**,
+              /archive-api/archiveprofiles/export,
+              /archive-api/sae/**,
+              /archive-api/originating-referentials/**
+
+          filters:
+            - RewritePath=/portal-api/tenantarchiveparams(?<segment>.*),/see-external/v1/tenantarchiveparams$\{segment}
+            - RewritePath=/flow-api/v2/archivetypes(?<segment>.*),/see-external/v1/archivetypes$\{segment}
+            - RewritePath=/flow-api/search/stickers(?<segment>.*),/see-external/v1/units/stickers$\{segment}
+            - RewritePath=/flow-api/(?<segment>.*),/see-external/v1/$\{segment}
+
+            - RewritePath=/logistic-api/customerarchiveparams(?<segment>.*),/see-external/v1/customerarchiveparams$\{segment}
+
+            - RewritePath=/referential-api/archive/operations(?<segment>.*),/see-external/v1/operations/$\{segment}
+
+            - RewritePath=/archive-api/search/units,/see-external/v1/units
+            - RewritePath=/archive-api/search/objects,/see-external/v1/objects
+            - RewritePath=/archive-api/search/v1/filingplan(?<segment>.*),/see-external/v1/units/filingplan$\{segment}
+            - RewritePath=/archive-api/search/v1,/see-external/v1
+            - RewritePath=/archive-api/search,/see-external/v1/units
+            - RewritePath=/archive-api/objects/(?<segment>.*),/see-external/v1/units/objects/$\{segment}
+            - RewritePath=/archive-api/download/(?<segment>.*),/see-external/v1/dips/$\{segment}
+            - RewritePath=/archive-api/(?<segment>.*),/see-external/v1/$\{segment}
+
+        - id: flow-internal-service
+          uri: {{ 'https' if flow_internal.server_secure | bool else 'http' }}://{{ flow_internal.server_host }}:{{ flow_internal.server_port }}
+          predicates:
+            - >
+              Path=
+              /flow-api/flows/**,
+              /flow-api/items/**,
+              /flow-api/v2/items/**,
+              /flow-api/qrcode,
+              /flow-api/flowparams/**,
+              /flow-api/operations/**,
+              /flow-api/v1/operations/**,
+              /flow-api/status,
+              /flow-api/sip/**,
+
+              /archive-api/workflows/**,
+              /archive-api/item/**,
+              /archive-api/flow/operations/**,
+
+              /wms-api/items/**,
+              /wms-api/operations/**,
+              /wms-api/histories/**,
+              /wms-api/printers/**,
+              /wms-api/legacy/**,
+              /wms-api/flow/status,
+
+              /logistic-api/items/**,
+              /logistic-api/workflows/**,
+              /logistic-api/item/**,
+              /logistic-api/printers/**,
+
+              /identity-api/user-activity/export
+
+          filters:
+            - RewritePath=/flow-api/items/(?<segment>.*)/download/sip,/v1/items/download/sip/$\{segment}
+            - RewritePath=/flow-api/qrcode(?<segment>.*),/qrcode$\{segment}
+            - RewritePath=/flow-api/v2/items(?<segment>.*),/v2/items$\{segment}
+            - RewritePath=/flow-api/v1/operations(?<segment>.*),/v1/operations$\{segment}
+            - RewritePath=/flow-api/status,/status
+            - RewritePath=/flow-api/(?<segment>.*),/v1/$\{segment}
+
+            - RewritePath=/archive-api/workflows(?<segment>.*),/v1/workflows$\{segment}
+            - RewritePath=/archive-api/item(?<segment>.*),/v2/items$\{segment}
+            - RewritePath=/archive-api/flow/operations/(?<segment>.*),/v1/operations/$\{segment}
+
+            - RewritePath=/wms-api/items(?<segment>.*),/v2/items$\{segment}
+            - RewritePath=/wms-api/operations(?<segment>.*),/v1/operations$\{segment}
+            - RewritePath=/wms-api/histories(?<segment>.*),/histories$\{segment}
+            - RewritePath=/wms-api/printers(?<segment>.*),/printers$\{segment}
+            - RewritePath=/wms-api/legacy(?<segment>.*),/legacy$\{segment}
+            - RewritePath=/wms-api/flow/status,/status
+            - RewritePath=/wms-api/(?<segment>.*),/v1/$\{segment}
+
+            - RewritePath=/logistic-api/items(?<segment>.*),/v2/items$\{segment}
+            - RewritePath=/logistic-api/workflows(?<segment>.*),/v1/workflows$\{segment}
+            - RewritePath=/logistic-api/item(?<segment>.*),/v2/items$\{segment}
+            - RewritePath=/logistic-api/printers(?<segment>.*),/printers$\{segment}
+
+            - RewritePath=/identity-api/user-activity/export(?<segment>.*),/histories/user-activities$\{segment}
+
+        - id: reporting-internal-service
+          uri: {{ 'https' if reporting_internal.server_secure | bool else 'http' }}://{{ reporting_internal.server_host }}:{{ reporting_internal.server_port }}
+          predicates:
+            - >
+              Path=
+              /portal-api/ingests/**,
+
+              /reporting-api/ingests/**,
+              /reporting-api/stocks/**,
+              /reporting-api/export/**,
+              /reporting-api/report-types/**
+          filters:
+            - RewritePath=/portal-api(?<segment>.*),/reporting/v1$\{segment}
+            - RewritePath=/reporting-api(?<segment>.*),/reporting/v1$\{segment}
+
+        - id: flow-internal-actuator
+          uri: http://{{ flow_internal.server_host }}:{{ flow_internal.management_server_port }}
+          predicates:
+            - >
+              Path=
+              /wms-api/flow/actuator/info,
+          filters:
+            - RewritePath=/wms-api/flow/actuator/info,/actuator/info
+
+        - id: logistic-internal-actuator
+          uri: http://{{ logistic_internal.server_host }}:{{ logistic_internal.management_server_port }}
+          predicates:
+            - >
+              Path=
+              /wms-api/logistic/actuator/info
+          filters:
+            - RewritePath=/wms-api/logistic/actuator/info,/actuator/info
+
+        - id: logistic-internal-service
+          uri: {{ 'https' if logistic_internal.server_secure | bool else 'http' }}://{{ logistic_internal.server_host }}:{{ logistic_internal.server_port }}
+          predicates:
+            - >
+              Path=
+              /logistic-api/archive-operators/**,
+              /logistic-api/centers/**,
+              /logistic-api/sites/**,
+              /logistic-api/buildings/**,
+              /logistic-api/rooms/**,
+              /logistic-api/racks/**,
+              /logistic-api/locations/**,
+              /logistic-api/logisticunits/**,
+              /logistic-api/archive-rooms/**,
+              /logistic-api/containertypes,
+              /logistic-api/profileparam/**,
+              /logistic-api/profileparamcenter/**,
+              /logistic-api/owners/**,
+              /logistic-api/series/**,
+
+              /archive-api/archive-operators,
+              /archive-api/centers/**,
+              /archive-api/containertypes,
+              /archive-api/logisticunits/**,
+              /archive-api/locations/**,
+
+              /wms-api/owners/**,
+              /wms-api/series/**,
+              /wms-api/archiveoperators/**,
+              /wms-api/centers/**,
+              /wms-api/sites/**,
+              /wms-api/buildings/**,
+              /wms-api/rooms/**,
+              /wms-api/racks/**,
+              /wms-api/locations/**,
+              /wms-api/logistic-units/**,
+              /wms-api/containerTypes/**,
+              /wms-api/barcoderepositories/**,
+              /wms-api/providers/**,
+              /wms-api/rootsystem/**,
+              /wms-api/legacy-movements/**,
+              /wms-api/code-ranges/**,
+              /wms-api/logistichistories/**,
+              /wms-api/logistic/status,
+              /wms-api/consolidation-site-params/**,
+              /wms-api/regions/**,
+              /wms-api/owner-storage-sites/**,
+              /wms-api/ownerlogisticinstructions/**,
+              /wms-api/upcoming-logistic-units/**,
+
+              /portal-api/sites/**
+
+          filters:
+            - RewritePath=/logistic-api/archive-operators/(?<segment>.*)/archive-room/import,/logistic/v1/archiveoperators/$\{segment}/archive-rooms/import
+            - RewritePath=/logistic-api/archive-operators(?<segment>.*),/logistic/v1/archiveoperators$\{segment}
+            - RewritePath=/logistic-api/containerTypes,/logistic/v1/containertypes
+            - RewritePath=/logistic-api(?<segment>.*),/logistic/v1$\{segment}
+
+            - RewritePath=/archive-api/archive-operators(?<segment>.*),/logistic/v1/archiveoperators$\{segment}
+            - RewritePath=/archive-api/centers(?<segment>.*),/logistic/v1/centers$\{segment}
+            - RewritePath=/archive-api/containertypes,/logistic/v1/containertypes
+            - RewritePath=/archive-api/logisticunits(?<segment>.*),/logistic/v1/logisticunits$\{segment}
+            - RewritePath=/archive-api/locations(?<segment>.*),/logistic/v1/locations$\{segment}
+
+            - RewritePath=/wms-api/logistic-units(?<segment>.*),/logistic/v1/logisticunits$\{segment}
+            - RewritePath=/wms-api/code-ranges(?<segment>.*),/logistic/v1/coderange$\{segment}
+            - RewritePath=/wms-api/containerTypes(?<segment>.*),/logistic/v1/containertypes$\{segment}
+            - RewritePath=/wms-api/legacy-movements(?<segment>.*),/logistic/v1/legacymovements$\{segment}
+            - RewritePath=/wms-api/logistic/status,/status
+            - RewritePath=/wms-api(?<segment>.*),/logistic/v1$\{segment}
+
+            - RewritePath=/portal-api(?<segment>.*),/logistic/v1$\{segment}
+        {%- if (groups['ui_provisioning'] | default([]) | length >0) +%}
+        - id: provisioning-users-service
+          uri: {{ 'https' if provisioning_users.server_secure | bool else 'http' }}://{{ provisioning_users.server_host }}:{{ provisioning_users.server_port }}
+          predicates:
+            - >
+              Path=
+              /provisioning-api/**
+
+          filters:
+            - RewritePath=/provisioning-api/(?<segment>.*),/provisioning/v1/$\{segment}
+        {%- endif +%}
+
+        {%- if (groups['ui_provisioning'] | default([]) | length >0) +%}
+        - id: provisioning-users-service
+          uri: {{ 'https' if provisioning_users.server_secure | bool else 'http' }}://{{ provisioning_users.server_host }}:{{ provisioning_users.server_port }}
+          predicates:
+            - >
+              Path=
+              /provisioning-api/**
+
+          filters:
+            - RewritePath=/provisioning-api/(?<segment>.*),/provisioning/v1/$\{segment}
+        {%- endif +%}
+
+
+logging:
+  file:
+    name: {{ springboot_root_path }}/{{ springboot_log_dir }}/{{ springboot_name }}/{{ springboot_name }}.json.log
+  level:
+    fr.gouv.vitamui: {{ logging.level | default('INFO') }}
+
+

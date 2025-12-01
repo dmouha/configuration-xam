@@ -1,0 +1,715 @@
+# Setting up root path
+root_path: "/app"
+dlab_assets: /app/conf/assets
+java_version: 21
+
+
+####################
+# archive INTERNAL #
+####################
+archive_internal:
+  service_name: dlab-archive-internal
+  nexus_artifact_id: archive-internal
+  nexus_group_id: fr.locarchives.dlab
+  server_host: archive-internal.service.consul
+  hostname_verification: false
+  management_server_port: 7202
+  management_server_ssl_enabled: false
+  server_port: 8202
+  server_secure: true
+  jvm_xmx: 1024
+  jvm_xms: 1024
+  logbook_scheduling_enabled: true
+  logbook_scheduling_delay: 1000
+  server_ssl_key_password: jkspasswd
+  server_ssl_keystore_filename: keystore_archive_internal.jks
+  server_ssl_keystore_password: jkspasswd
+  server_ssl_truststore_filename: truststore_archive_internal.jks
+  server_ssl_truststore_password: jkspasswd
+  server_tomcat_enabled: false
+  server_max_http_header_size: 10KB
+  servlet_multipart_max_file_size: 1024MB
+  servlet_multipart_max_request_size: 1024MB
+  configs:
+    - src: "files/archive_internal/templates/*"
+      dest: templates
+    - src: "{{ playbook_dir }}/templates/vitam/*"
+  token_api: "archive_changeme"
+
+####################
+# logistic INTERNAL #
+####################
+logistic_internal:
+  service_name: dlab-logistic-internal
+  nexus_artifact_id: logistic-internal
+  nexus_group_id: fr.locarchives.dlab
+  server_host: logistic-internal.service.consul
+  hostname_verification: false
+  management_server_port: 7205
+  management_server_ssl_enabled: false
+  server_port: 8205
+  server_secure: true
+  connect_timeOut: 30
+  read_timeOut: 30
+  write_timeOut: 30
+  server_ssl_key_password: jkspasswd
+  server_ssl_keystore_filename: keystore_logistic_internal.jks
+  server_ssl_keystore_password: jkspasswd
+  server_ssl_truststore_filename: truststore_logistic_internal.jks
+  server_ssl_truststore_password: jkspasswd
+  server_tomcat_enabled: false
+  server_max_http_header_size: 10KB
+  security_system_identity: api-logistic-internal
+  security_system_applicationId: api-logistic-internal
+  security_system_userId: apiflowuser
+  servlet_multipart_max_file_size: 1024MB
+  servlet_multipart_max_request_size: 1024MB
+  liquibase:
+    contexts: prod
+  token_api: "flow_changeme"
+  enabled: "{{ groups['logistic_internal'] | default([]) | length > 0 | bool }}"
+
+#################
+# flow INTERNAL #
+#################
+flow_internal:
+  service_name: dlab-flow-internal
+  nexus_artifact_id: flow-internal
+  nexus_group_id: fr.locarchives.dlab
+  server_host: flow-internal.service.consul
+  hostname_verification: false
+  management_server_port: 7204
+  management_server_ssl_enabled: false
+  server_port: 8204
+  server_secure: true
+  jvm_xmx: 1024
+  jvm_xms: 1024
+  logbook_scheduling_enabled: true
+  logbook_scheduling_delay: 1000
+  server_ssl_key_password: jkspasswd
+  server_ssl_keystore_filename: keystore_flow_internal.jks
+  server_ssl_keystore_password: jkspasswd
+  server_ssl_truststore_filename: truststore_flow_internal.jks
+  server_ssl_truststore_password: jkspasswd
+  server_tomcat_enabled: false
+  server_max_http_header_size: 10KB
+  disposal_creation: 10000
+  disposal_total: 10000
+  auto_elimination: false
+  configs:
+    - src: "files/flow_internal/templates/*"
+      dest: templates
+    - src: "{{ playbook_dir }}/templates/vitam/*"
+  read_timeout: 300
+  write_timeout: 300
+  token_api: "flow_changeme"
+
+######################
+# reporting INTERNAL #
+######################
+reporting_internal:
+  service_name: dlab-reporting-internal
+  nexus_artifact_id: reporting-internal
+  nexus_group_id: fr.locarchives.dlab
+  server_host: reporting-internal.service.consul
+  hostname_verification: false
+  management_server_port: 7304
+  management_server_ssl_enabled: false
+  server_port: 8304
+  server_secure: true
+  server_ssl_key_password: jkspasswd
+  server_ssl_keystore_filename: keystore_reporting_internal.jks
+  server_ssl_keystore_password: jkspasswd
+  server_ssl_truststore_filename: truststore_reporting_internal.jks
+  server_ssl_truststore_password: jkspasswd
+  server_tomcat_enabled: false
+  server_max_http_header_size: 10KB
+  stock_max_years: 10
+  stock_chunk: 10
+  stock_maximum-years: 10
+  cron_expression: 0 0 3 ? * *
+  launch_on_startup: "{{ launch_on_startup | default(false) }}"
+  for_current_day: "{{ for_current_day | default(false) }}"
+  number_of_days_to_catch_up: 1
+  configs:
+    - src: "{{ playbook_dir }}/templates/vitam/*"
+  token_api: "flow_changeme"
+  excluded_tenants: "{{ [-1, 1, 20, 27,dlab_platform_informations.proof_tenant,dlab_platform_informations.cas_tenant,vitamui_platform_informations.proof_tenant,vitamui_platform_informations.cas_tenant] }}"
+  extra_excluded_tenants: []
+
+
+#############
+# ui ARCHIVE #
+#############
+ui_archive:
+  server_name: "placeholder-archive.teamdlab.com"
+  frontend_name: archive
+  platform_name: X-AM
+  server_port: 8004
+  item_maximum_units: 10000
+  item_maximum_units_per_item: 10000
+  bulk_search_max_values_number: 5000
+  eligibleType: BANALISE
+  holding_position_levels: 3
+  holding_position_displayed: 5
+  holding_position_start_year: 1900
+  holding_position_end_year: 2100
+  resources_header_cache_control: "max-age=1800, must-revalidate"
+
+###############
+# ui Logistic #
+##############
+ui_logistic:
+  enabled: "{{ groups['ui_logistic'] | default([]) | length > 0 | bool }}"
+  server_name: "placeholder-logistic.teamdlab.com"
+  frontend_name: logistic
+  platform_name: X-AM
+  server_port: 8006
+  #TO CHECK
+  xelians_center_code: "XEL"
+  resources_header_cache_control: "max-age=1800, must-revalidate"
+
+###############
+# ui Flow #
+##############
+ui_flow:
+  server_name: "placeholder-flow.teamdlab.com"
+  frontend_name: flow
+  platform_name: X-AM
+  server_host: ui-flow.service.consul
+  server_port: 8005
+  resources_header_cache_control: "max-age=1800, must-revalidate"
+
+#################
+# ui Flow admin #
+################
+ui_flow_admin:
+  server_name: "placeholder-flow-admin.teamdlab.com"
+  frontend_name: flow-admin
+  platform_name: X-AM
+  server_host: ui-flow-admin.service.consul
+  server_port: 8402
+
+################
+# ui reporting #
+################
+ui_reporting:
+  server_name: "placeholder-reporting.teamdlab.com"
+  frontend_name: reporting
+  platform_name: X-AM
+  server_host: ui-reporting.service.consul
+  server_port: 8307
+  resources_header_cache_control: "max-age=1800, must-revalidate"
+
+
+##################
+#  ui portal   #
+##################
+ui_portal_xam:
+  server_name: "placeholder-portal.teamdlab.com"
+  frontend_name: portal-xam
+  server_port: 6003
+  platform_name: X-AM
+  portal_logo: "logo_PORTAL.png"
+  header_logo: "logo_HEADER.png"
+  user_logo: "logo_USER.png"
+  resources_header_cache_control: "max-age=1800, must-revalidate"
+
+###################
+# Interco client
+###################
+interco_client:
+  enable: true
+  proxy:
+    enabled: false
+  server_host: 127.0.0.1
+  server_port: 443
+  server_secure: true
+  no_client_authentication: true
+  connect_timeOut: 100
+  read_timeOut: 100
+  write_timeOut: 100
+  context: /interco.loc.n1
+  token: montoken
+  hostname_verification: false
+
+###################
+# Armoni client
+###################
+
+armoni_client:
+  enable: false
+
+###################
+# OTHER variables #
+###################
+
+postgresql_logistic_database: logistic
+postgresql_logistic_user: logistic
+postgresql_logistic_password: "{{ vault_postgres_logistic | default('changeme') }}"
+
+postgresql_databases:
+  - name: "{{ postgresql_logistic_database }}"
+    user: "{{ postgresql_logistic_user }}"
+    password: "{{ postgresql_logistic_password }}"
+    source_ips: ["0.0.0.0/0"]
+    retention_policy: 'RECOVERY WINDOW OF 2 WEEKS'
+
+# Themes
+theme:
+  vitamui_primary: "#093DC5"
+  vitamui_secondary: "#0EBCFF"
+  vitamui_tertiary: "#FF4A54"
+  vitamui_header_footer: "#ffffff"
+  vitamui_background: "#F5F7FC"
+
+fulltext_maximum_length: 32760
+fulltext_maximum_file_size: 94371840 # Size in bytes (90 MB)
+
+sip_ingest_max_size_in_bytes: 2147483648 # Size in bytes (2 GB)
+
+basket_params:
+  maxBasketsPerUser: 10
+  maxItemsPerBasket: 100
+
+import:
+  max_long_text_length: 5000
+  max_small_text_length: 150
+
+
+extract_forms:
+  type: RIA
+  first_field: RIA début
+  second_field: RIA fin
+  length: 22
+  mandatory: true
+  number_only: true
+  comment_max_length: 40
+
+integrity_attestation:
+  instance_operator_logo: instance-operator-logo.png
+  instance_operator: Xelians
+  product_name: XELIANS ARCHIVES MANAGEMENT
+  logo_nf: logo-nf.png
+  social_reason_1: "Siège social : 15 avenue Marcelin Berthelot - ZI du Val de Seine - 92396 Villeneuve la Garenne Cedex"
+  social_reason_2: "Tél. : 01 49 33 78 00 - RCS Nanterre - 450 943 204"
+
+address:
+  max_street_length: 250
+
+archive_unitary_ingest_max_size: 4294967296 # Size in bytes (4 GB)
+
+index_item:
+  max_nb_documents: 1000
+  max_size_by_document: 4096 # Size in MB (4 GB)
+  max_size_total: 15360 # Size in MB (15 GB)
+
+mobile:
+  home_img: "mobile_app_home.png"
+
+qr_code:
+  dev:
+    enabled: false
+    defaultPassword: changeme
+    defaultLogin: "demo@xelians-dev.fr"
+
+holding:
+  position_virtual_nodes_levels: 3
+
+common_asyncTasks:
+  timeout: PT10M
+  delay: PT5S
+  secret-key: secret-key
+  token-url: http://127.0.0.1/tokenmanager/api/dw/
+  auth-url: http://127.0.0.1/Docuware/Platform/Account/TokenLogOn
+  return-url: /Docuware
+
+  poolSize: 50
+  awaitTerminationSeconds: 10
+  waitForTasksToCompleteOnShutdown: true
+
+vitam_async_task:
+  unitary_ingest_timeout: 30
+  export_timeout: 60
+
+security:
+  system_identity: api-flow-internal
+  system_applicationId: api-flow-internal
+  system_token: "{{ flow_internal.token_api }}"
+  system_userId: apiflowuser
+
+logger_name: "fr.locarchives"
+
+vitam_logger:
+  enable: true
+  name: fr.gouv.vitam.common.stream
+  level: WARN
+
+xam_loggers:
+  - name: org.apache.camel
+    level: WARN
+
+logging:
+  logback_max_file_size: "10MB"
+  logback_max_history: 30
+  logback_total_size_cap: "5GB"
+  root_log_level: "ERROR"
+  level: "INFO"
+  scan: False
+  scanPeriod: "1 minutes"
+
+docuware:
+  enabled: true
+  secret_key: "secret_key"
+  token_url: "token_url"
+  auth_url: "auth_url"
+  return_url: "return_url"
+
+applications:
+  archive_app_path: "archive/tenant"
+
+mailing:
+  item_consultation_cron_expression: 0 0 0 ? * MON
+  day_interval_threshold: 10
+
+basket:
+  month_interval_expiration: 3
+  min_basket_per_user: 1
+  min_units_per_basket: 1
+  max_basket_per_user: 20
+  max_units_per_basket: 10000
+
+barcode:
+  client: FX
+  config_pageWidth: 210 mm
+  config_pageHeight: 297 mm
+  config_leftMargin: 0 mm
+  config_rightMargin: 0 mm
+  config_topMargin: 0 mm
+  config_bottomMargin: 0 mm
+  config_verticalGap: 0 mm
+  config_horizontalGap: 0 mm
+  config_barcodeType: CODE_128
+  config_barcodeWidth: 70 mm
+  config_barcodeHeight: 25 mm
+  config_labelFontSize: 13F
+  config_codeFontSize: 10F
+  config_printCode: True
+  config_printBox: True
+  config_horizontalPrints: 2
+  config_verticalPrints: 4
+
+scheduler:
+  numbering_order_reset_cron_expression: 0 0 0 * * *
+  nightly_cron_expression: 0 0 0 ? * *
+  terminated_operation_retention_period: 1
+  failed_operation_retention_period: 48
+
+########################
+# SECURE TRANSFER #
+########################
+secure_transfer:
+  enable: false
+
+###################
+# SECURE TRANSFER client
+###################
+secure_transfer_client:
+  enable: false
+  proxy:
+    enabled: false
+  server_host: 127.0.0.1
+  server_port: 443
+  server_secure: true
+  no_client_authentication: true
+  connect_timeOut: 100
+  read_timeOut: 100
+  write_timeOut: 100
+  hostname_verification: false
+
+flow:
+  scheduler:
+    itemConsultation:
+      dayIntervalThreshold: "{{ mailing.day_interval_threshold }}"
+    flowStatus:
+      cronExpression: 0 * * ? * *
+    itemCleaning:
+      cronExpression: 0 0 * ? * *
+      retentionPeriod: P1D
+      limit: 5
+    operation:
+      timeoutJob:
+        cronExpression: 0 0 * ? * *
+      obsolete:
+        cronExpression: 0 0 * ? * *
+      vitamOperation:
+        cronExpression: 0/30 * * * * ?
+    uploadDocumentsCleaning:
+         cronExpression: "{{ scheduler.nightly_cron_expression }}"
+         retentionTimeInMilliseconds: 21600000 # 6 hours
+    unitCleaning:
+      cronExpression: "{{ scheduler.nightly_cron_expression }}"
+      retentionTimeInDay: 90
+    blockedItem:
+      cronExpression: "\"-\""
+      maxDelayBlocked: 10
+    itemUserAlerts:
+      cronExpression: "{{ scheduler.nightly_cron_expression }}"
+      maxAlertsPerUser: 10
+    armoniSync:
+      enabled: false
+      cronExpression: 0 0 * * * ?
+    itemDocumentCleaning:
+      cronExpression: "{{ scheduler.nightly_cron_expression }}"
+      maxDelayItemDocumentCleaning: 90 # days
+
+
+#################################################################################
+
+
+################
+# API GATEWAY  #
+################
+gateway:
+  identity_name: gateway_identity_name
+  identity_role: gateway
+  identity_id: 1
+  service_name: vitamui-gateway
+  nexus_artifact_id: api-gateway
+  nexus_group_id: fr.gouv.vitamui
+  server_host: vitamui-gateway.service.consul
+  management_server_port: 7090
+  management_server_ssl_enabled: false
+  server_port: 8090
+  server_secure: true
+  server_ssl_key_password: changeme
+  server_ssl_keystore_filename: keystore_gateway.jks
+  server_ssl_keystore_password: changeme
+  server_ssl_truststore_filename: truststore_gateway.jks
+  server_ssl_truststore_password: changeme
+  server_tomcat_enabled: false
+  server_max_http_header_size: 10KB
+  client_certificate_header_name: x-ssl-cert
+  client_ssl_key_password: changeme
+  client_ssl_keystore_filename: keystore_gateway.jks
+  client_ssl_keystore_password: changeme
+
+#####################
+#    END GATEWAY    #
+#####################
+
+################
+# IAM INTERNAL #
+################
+iam_internal:
+  service_name: vitamui-iam-internal
+  nexus_artifact_id: iam-internal
+  nexus_group_id: fr.gouv.vitamui
+  server_host: iam-internal.service.consul
+  hostname_verification: false
+  management_server_port: 5201
+  management_server_ssl_enabled: false
+  server_port: 6201
+  server_secure: true
+  server_ssl_key_password: changeme
+  server_ssl_keystore_filename: keystore_iam_internal.jks
+  server_ssl_keystore_password: changeme
+  server_ssl_truststore_filename: truststore_iam_internal.jks
+  server_ssl_truststore_password: changeme
+  server_tomcat_enabled: false
+  server_max_http_header_size: 10KB
+  login_attempts_maximum_failures: 5
+  login_attempts_time_interval: 20
+  platform_name: X-AM
+  vitam_tenant_init_mandatory: true
+  logbook_scheduling_enabled: true
+  logbook_scheduling_delay: 60000
+  logging_level_fr_gouv_vitamui_iam_internal_server: INFO
+  connect_timeout: 30
+  read_timeout: 30
+  write_timeout: 30
+  gdpr_alert_readonly: true
+  user_token_ttl: 60
+  user_token_additional_ttl: 60
+  user_subrogation_token_ttl: 60
+  api_token_ttl: 60
+  generic_users_subrogation_ttl: 60
+  subrogation_ttl: 60
+  configs:
+    - src: "{{ playbook_dir }}/templates/vitam/*"
+  user_provisioning_token: tokUserprov
+
+################
+#  cas-server  #
+################
+cas_server:
+  server_name: "placeholder-cas.teamdlab.com"
+  service_name: vitamui-cas-server
+  nexus_artifact_id: cas-server
+  nexus_group_id: fr.gouv.vitamui
+  nexus_binary_extension: war
+  server_host: cas-server.service.consul
+  hostname_verification: false
+  management_server_port: 5001
+  management_server_ssl_enabled: false
+  server_context_path: /
+  server_servlet_session_cookie_path: /
+  server_tomcat_basedir: /vitamui/conf/cas-server/tomcat
+  server_port: 6001
+  server_ssl_key_password: changeme
+  server_ssl_keystore_filename: keystore_cas_server.jks
+  server_ssl_keystore_password: changeme
+  server_ssl_truststore_filename: truststore_cas_server.jks
+  server_ssl_truststore_password: changeme
+  server_secure: 'true'
+  server_tomcat_enabled: false
+  vitam_ui_cas_tenant_identifier: 11
+  vitam_ui_cas_identity: cas
+  cas_tgc_secure: true
+  cas_tgc_crypto_enabled: true
+  cas_webflow_crypto_enabled: true
+  cas_authn_pm_reset_crypto_enabled: true
+  cas_cors_enabled: true
+  cas_server_prefix: https://cas-server.teamdlab.com
+  cas_login_url: ${cas.server.prefix}/login
+  cas_authn_surrogate_separator: ","
+  cas_authn_surrogate_mail_attributeName: fakeNameToBeSureToFindNoAttributeAndNeverSendAnEmail
+  cas_authn_pm_enabled: true
+  cas_authn_pm_reset_mail_subject: Requete de reinitialisation de mot de passe
+  cas_authn_pm_reset_mail_text: "Changez de mot de passe via le lien: %s"
+  cas_authn_pm_reset_mail_from: no-reply.dlab@xelians.fr
+  cas_authn_pm_reset_expirationMinutes: 1440
+  cas_authn_pm_reset_number_of_uses: 2
+  cas_authn_pm_reset_mail_attributeName: email
+  cas_authn_pm_reset_securityQuestionsEnabled: false
+  cas_authn_pm_reset_includeServerIpAddress: false
+  cas_authn_pm_reset_includeClientIpAddress: false
+  cas_authn_pm_autoLogin: true
+  cas_authn_throttle_failure_threshold: 2
+  cas_authn_throttle_failure_rangeSeconds: 3
+  cas_logout_follow_service_redirects: true
+  cas_redirect_parameter: next
+  management_endpoints_enabled_by_default: true
+  management_endpoints_web_exposure_include: '*'
+  cas_monitor_endpoints_endpoint_defaults_access: PERMIT
+  management_metrics_export_prometheus_enabled: true
+  management_health_memoryHealthIndicator: true
+  logger_audit_enable: false
+  loging_level_org_reflections_Reflections: ERROR
+  loging_level_org_apereo_cas_web_CasWebApplication: INFO
+  loging_level_org_springframework_boot_autoconfigure_security: INFO
+  loging_level_org_jasig_cas_client: INFO
+  loging_level_org_apereo: INFO
+  loging_level_org_springframework_cloud: INFO
+  loging_level_org_springframework_amqp: 'OFF'
+  loging_level_org_springframework_context_annotation: 'OFF'
+  loging_level_org_springframework_boot_devtools: 'OFF'
+  loging_level_org_apereo_cas_web_flow: INFO
+  loging_level_org_apereo_inspektr_audit_support: 'OFF'
+  loging_level_fr_gouv_vitamui_cas: DEBUG
+  loging_level_org_elasticsearch_metrics: DEBUG
+  loging_level_fr_gouv_vitamui_commons: DEBUG
+  token_api: "cas_changeme"
+  token_ttl: 28800
+  ip_header: X-Real-IP
+  audit_engine_alternate_client_addr_header_name: X-Forwarded-For
+  platform_name: X-AM
+  external_url: "https://cas-server.teamdlab.com"
+  internal_url: "https://cas-server.service.consul:6001"
+  cas_tgc_crypto_encryption_key: 8gFOzerI9DZqnomj5ZB6_eYHSWBSLBaD0v0q9rtx4d4
+  cas_tgc_crypto_signing_key: ZySzTxhJBZA3mkHtbvPWnYAI0Dw-wDyiOeiDI7f_UnjnVRPGjnrDy06S8pjBA25CNQueekjnZHivM2S4VkPgQg
+  cas_webflow_crypto_signing_key: pV5GGTJ2b_ZipPpQH4uOYhAtfsnIfP3cPGGIix-ppHbHVwrvqwXq7uAR7-dZl4hoKfKwlfBnErhikDg0TEPQqw
+  cas_webflow_crypto_encryption_key: P08MN-UDObp7o163WRKbJQ
+  cas_authn_pm_reset_crypto_encryption_key: 0jSATBzlOeJg9sje1xeUVW844WqeZXxrahiH8icFaBg
+  cas_authn_pm_reset_crypto_signing_key: PF1aj55cVcPdscLvDPK2o4S20RNNfwuNt_JMTRPwW80EwQHZ08Ie9_l5iT8T7dq6YIjT5g6MGTmQaj5zVDRrFQ
+  cas_authn_oauth_crypto_encryption_key: WN_aoKWcdC1ZEEY7OCJ8Xb0PziiEX3Ql14mSUGiZP70
+  cas_authn_oauth_crypto_signing_key: _YKlQ099iIVBvke9DLF1SIReH5UWjWXz-pJCs2UOH043AcwzXn5SZmBGwK9VOl0m3ReldATr9VQ4cLM2-lMciA
+  cas_authn_oauth_access_token_crypto_encryption_key: CemyWNZGUdSmgU2GUXhgv6-XNh1kY9dUbHs-lGc1_-0
+  cas_authn_oauth_access_token_crypto_signing_key: 80nh1qOiQDbQ4a7FrvO2CELBJ0Rm1VOuE7HATWOGcYZIcfflNkTX7DAe-SFcLneFO1LB_ZjPUJ84vwwSHJ6wwA
+  cas_authn_oauth_session_replication_cookie_crypto_encryption_key: PxtvZYlj6mfCTF9WBFulUM8AHY9o3LETMSxrE39FjlK
+  cas_authn_oauth_session_replication_cookie_crypto_signing_key: RcDjFxciiRRtwyIt+y0aPKUot25D+qfgastGjFMdrhD0QrdNtRZEhF3U8jsyV0gDQblwaVO5TN1SJoGEZ3RvMQ
+  cas_authn_pac4j_core_session_replication_cookie_crypto_encryption_key: RGG0/8XvAQKHl+XQ+mqT6WGQIqv2bkuxPlJ2QkR0qzP
+  cas_authn_pac4j_core_session_replication_cookie_crypto_signing_key: cLrc+uxctAk6CCnjThipQxHD2ndgy5IKetkX5/WtHj/kCe1u1Xkm3h57REhyBS6oFM7IHFlUaAwbsKso/G+SVw
+  cas_authn_passwordless_tokens_crypto_encryption_key: J9LVFAnOq0IZu9ROmsjKFoo8YkfqnnqnYpWXLd6ptOD
+  cas_authn_passwordless_tokens_crypto_signing_key: 7LXXCQJRrLnu4bUc23G0TSgicaK4VyAhxJByzHiteT8+PoOb9zFzQMeoACL1Am3lUlYTvwx/baFaWzF1Girq6g
+  cas_mfa_enabled: false
+  cas_authn_mfa_simple_sms_from: Xelians
+  cas_authn_mfa_simple_sms_text: 'Bonjour, ${tokenWithoutPrefix} est votre code de vérification X-AM.'
+  cas_authn_mfa_simple_token_core_time_to_kill_in_seconds: 300
+  cas_authn_mfa_simple_token_core_token_length: 4
+  cas_authn_mfa_simple_mail_text: 'Bonjour, ${tokenWithoutPrefix} est votre code de vérification X-AM.'
+
+
+###########################
+#  referential internal   #
+###########################
+referential_internal:
+  service_name: vitamui-referential-internal
+  nexus_artifact_id: referential-internal
+  nexus_group_id: fr.gouv.vitamui
+  server_host: referential-internal.service.consul
+  hostname_verification: false
+  management_server_port: 5205
+  management_server_ssl_enabled: false
+  server_port: 6205
+  server_secure: true
+  server_ssl_key_password: changeme
+  server_ssl_keystore_filename: keystore_referential_internal.jks
+  server_ssl_keystore_password: changeme
+  server_ssl_truststore_filename: truststore_referential_internal.jks
+  server_ssl_truststore_password: changeme
+  server_tomcat_enabled: false
+  server_max_http_header_size: 10KB
+  logging_level_fr_gouv_vitamui_referential_internal_server: INFO
+  server_connection_timeout: 60000
+  connect_timeout: 30
+  read_timeout: 30
+  write_timeout: 30
+  configs:
+    - src: "{{ playbook_dir }}/templates/vitam/*"
+
+
+##################################################
+# Mandatory Vitam services for App Referential ###
+##################################################
+
+vitam:
+  functional_administration:
+    port_admin: 18004
+    vitam_tenants_usage_external:
+      - name: 0
+        identifiers:
+          - INGEST_CONTRACT
+          - ACCESS_CONTRACT
+          - MANAGEMENT_CONTRACT
+          - ARCHIVE_UNIT_PROFILE
+
+##################################################
+# End of mandatory Vitam services for App Referential ###
+##################################################
+
+provisioning_client:
+  enabled: false
+  identity_providers:
+    # example of identity providers (add a dict for each client)
+    client1:
+      idp_identifier: client1
+      uri: https://client1:8090/provisioning/v1/users
+      client_secure: true
+      client_ssl_client_auth: want
+      client_ssl_key_password: changeme
+      client_ssl_keystore_password: changeme
+      client_ssl_truststore_password: changeme
+      keystore_name: keystore_provisioning_users.jks
+      keystore_type: JKS
+      truststore_name: keystore_provisioning_users.jks
+      truststore_type: JKS
+      hostname_verification: false
+
+
+
+  type: vitam
+  hybrid:
+    tenant_mapping:
+      file:
+        path: "/app/data/tenant.json"

@@ -1,0 +1,97 @@
+spring:
+  cloud:
+    consul:
+      enabled: true
+      host: localhost
+      discovery:
+        preferIpAddress: true
+        ipAddress: 172.16.24.39
+        tags: referential-internal, api, internal, xam
+        instance-id: referential-internal-dev-env
+        scheme: https
+        health-check-url: http://172.16.24.39:5205/actuator/health
+        health-check-tls-skip-verify: true
+    openfeign:
+      httpclient:
+        disable-ssl-validation: true
+      client:
+        config:
+          default:
+            loggerLevel: basic
+  servlet:
+    multipart:
+      max-file-size: -1
+      max-request-size: -1
+
+sae:
+  type: hybrid
+  esafe:
+    organization:
+      id-strategy: RANDOM
+    url: https://esafe-integration.xelians-dev.fr
+    loggerLevel: FULL
+    security:
+      user:
+        username: root
+        api-key: xxxx
+  hybrid:
+    default-sae: vitam
+    tenant-mapping:
+      type: file
+      file:
+        path: /xelians-apps/data/iam_internal/tenant.json
+
+
+logging:
+  file:
+    name: /xelians-apps/logs/referential_internal/referential_internal.json.log
+  level:
+    fr.gouv.vitamui: DEBUG
+
+server:
+  forward-headers-strategy: framework
+  port: 6205
+  ssl:
+    key-store: /xelians-apps/conf/referential_internal/keystore_referential-internal.jks
+    key-store-password: changeme
+    key-password: changeme
+  max-http-request-header-size: 10KB
+  tomcat:
+    connection-timeout: 60000
+    accesslog:
+      enabled: "false"
+      directory: "/xelians-apps/logs/referential_internal/"
+
+management:
+  opentelemetry:
+    resource-attributes:
+      deployment.environment: crocodile
+  otlp:
+    tracing:
+      endpoint: http://tracing.xelians-dev.fr:4318/v1/traces
+      export:
+        enabled: True
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      instance: 172.16.24.39
+      hostname: crocodile-xam
+      environment: crocodile
+
+  server:
+    port: 5205
+    ssl:
+      enabled: false
+
+springdoc:
+  app:
+    openIdConnectUrl: https://crocodile.xelians-dev.fr/cas/oidc/.well-known/openid-configuration
+  swagger-ui:
+    oauth:
+      client-id: referential-swagger
+    enabled: True
+
+app:
+  gateway:
+    iam:
+      name: iam-internal

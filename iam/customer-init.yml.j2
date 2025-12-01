@@ -1,0 +1,620 @@
+customer-init:
+  profiles:
+    - name: Mon activité
+      description: Profil de l'application Mon Activité
+      level:
+      app-name: MY_ACTIVITY_V2_APP
+      roles:
+        - ROLE_GET_TENANTS
+        - ROLE_GET_MY_BASE_ITEMS
+        - ROLE_DOWNLOAD_BASE_ITEM_DOCUMENTS
+        - ROLE_DOWNLOAD_ITEM
+        - ROLE_DOWNLOAD_ITEM_TO_SIGN
+        - ROLE_DOWNLOAD_SIGNED_ITEM
+        - ROLE_DOWNLOAD_SIGNED_ARCHIVE_CERTIFICATE
+        - ROLE_DOWNLOAD_SIGNED_DISPOSAL_CERTIFICATE
+        - ROLE_DOWNLOAD_DISPOSAL_CERTIFICATE
+        - ROLE_DELETE_SIGNED_ITEM
+        - ROLE_DELETE_SIGNED_ARCHIVE_CERTIFICATE
+        - ROLE_GET_OPERATIONS
+        - ROLE_GET_FILE_OPERATIONS
+        - ROLE_ADD_INDEX_ITEM_DOCUMENTS
+        - ROLE_UPDATE_INDEX_ITEM_DOCUMENTS
+        - ROLE_GET_ARCHIVE_TYPE
+        - ROLE_SUBMIT_INDEX_ITEMS
+        - ROLE_VALIDATE_INGEST_INDEX_ITEMS
+        - ROLE_CONTROL_INDEX_ITEM_DOCUMENTS
+        - ROLE_UPLOAD_BASE_ITEM_DOCUMENTS
+        - ROLE_DOWNLOAD_INDEX_ITEM_CERTIFICATE
+        - ROLE_DOWNLOAD_INGEST_ATR
+        - ROLE_GET_ALL_CUSTOMER_ARCHIVE_TYPE
+        - ROLE_DOWNLOAD_DELIVERY_RECEIPT
+        - ROLE_DOWNLOAD_INDEX_ITEM_DOCUMENTS
+        - ROLE_GET_TENANTS_MY_CUSTOMER
+        - ROLE_PROCESS_TRANSFER_ITEMS
+        - ROLE_REFUSE_TRANSFER_ITEMS
+        - ROLE_CONFIRM_RECEIPT_TRANSFER_ITEMS
+        - ROLE_CONFIRM_UNRECEIVED_TRANSFER_ITEMS
+        - ROLE_GET_TENANT_ARCHIVE_PARAMS
+        - ROLE_UPDATE_BASE_ITEMS
+        - ROLE_DOWNLOAD_TRANSFER_FORM
+        - ROLE_CANCEL_SIGNIFICATIVE_INDEX_ITEM
+        - ROLE_DOWNLOAD_SIGNIFICATIVE_WITH_VALIDATION_INDEX_ITEM_TEMPLATE_TO_SIGN
+        - ROLE_LOGBOOKS
+        - ROLE_DOWNLOAD_ARCHIVE_IMPORTED
+        - ROLE_UPLOAD_INDEX_ITEM_DOCUMENTS
+        - ROLE_DELETE_BASE_ITEM_DOCUMENTS
+        - ROLE_GET_TENANT_ARCHIVE_PARAMS_ALL_TENANTS_MY_CUSTOMER
+        - ROLE_INDEX_BY_FILE
+        - ROLE_UPLOAD_FILE_INDEXATION
+        - ROLE_GET_ARCHIVE_LIFECYCLE
+        - ROLE_UPLOAD_COUNTER_SIGNED_ITEM
+        - ROLE_DOWNLOAD_COUNTER_SIGNED_ITEM
+        - ROLE_SEARCH
+        - ROLE_GET_ARCHIVE_LIFECYCLE_MY_CUSTOMER
+        - ROLE_DOWNLOAD_ITEM_SIGNED_BY_VALIDATOR
+        - ROLE_UPLOAD_ITEM_SIGNED_BY_VALIDATOR
+        - ROLE_DELETE_ITEM_SIGNED_BY_VALIDATOR
+        - ROLE_VALIDATE_DISPOSAL_TRANSFER_ITEMS
+        - ROLE_DOWNLOAD_GHOST_FOLLOW
+        - ROLE_UPLOAD_SIGNED_ITEM
+        - ROLE_GET_QR_CODE
+        - ROLE_GET_TENANT_HOLDING
+        - ROLE_UPLOAD_METADATA_MODIFICATION_FILE
+        - ROLE_DOWNLOAD_METADATA_MODIFICATION_FILE
+        - ROLE_CANCEL_MY_ITEMS
+
+    - name: users
+      description: Profil de l'application utilisateurs
+      app-name: USERS_APP
+      level:
+      roles:
+        - ROLE_GET_USER_ACTIVITIES
+        - ROLE_GET_USERS
+        - ROLE_SEARCH
+        - ROLE_GET_TENANT_TREE
+
+    - name: Rapports
+      description: Rapport et statistiques
+      level:
+      app-name: REPORTING_APP
+      roles:
+        - ROLE_GET_STOCKS
+        - ROLE_GET_INGEST_REPORTS
+        - ROLE_DOWNLOAD_REPORTING_EXPORT
+        - ROLE_DOWNLOAD_REPORTING_USER_CONNECTION_EXPORT
+        - ROLE_GET_USERS_CONNECTION_HISTORY_EXPORT
+
+    - name: Profil APP de supervision
+      description: Paramétrer des profils de supervision pour l’APP de supervision des bordereaux
+      level:
+      app-name: ITEM_SUPERVISION_PROFILE_APP
+      roles:
+        - ROLE_GET_PROFILES
+        - ROLE_CREATE_PROFILES
+        - ROLE_UPDATE_PROFILES
+        - ROLE_CREATE_ITEM_SUPERVISION_PARAM
+        - ROLE_GET_TENANTS
+        - ROLE_GET_ITEM_SUPERVISION_PARAM
+        - ROLE_UPDATE_ITEM_SUPERVISION_PARAM
+
+    - name: Profils APP Salle d’archives
+      description: Paramétrer des profils d’accès pour l’APP Salle d’archives
+      level:
+      readonly: false
+      app-name: ARCHIVE_ROOM_PROFILE_APP
+      roles:
+        - ROLE_GET_PROFILES
+        - ROLE_CREATE_PROFILES
+        - ROLE_UPDATE_PROFILES
+        - ROLE_GET_TENANTS
+        - ROLE_GET_ALL_CENTERS
+        - ROLE_GET_ARCHIVE_OPERATOR
+
+
+
+  profiles-groups:
+
+  users:
+
+  tenant-profiles:
+    - name: Registre des fonds
+      description: Visualisation de l'ensemble des données du registre des fonds
+      app-name: ACCESSION_REGISTER_APP
+      level:
+      roles:
+        - ROLE_GET_ACCESSION_REGISTER_DETAIL
+
+    - name: Profil Journal des Opérations
+      description: Gestion des applications des Journaux des Opérations
+      app-name: LOGBOOK_OPERATION_APP
+      level:
+      roles:
+        - ROLE_LOGBOOKS
+        - ROLE_GET_BASE_ITEMS
+        - ROLE_DOWNLOAD_ARCHIVING_CERTIFICATE
+        - ROLE_GET_TENANTS
+        - ROLE_GET_UNITS
+        - ROLE_GET_EXTERNAL_PARAMS
+
+    - name: Profil pour la gestion des contrats d'accès
+      description: Gestion des contrats d'accès dans Vitam
+      app-name: ACCESS_APP
+      level:
+      roles:
+        - ROLE_GET_ACCESS_CONTRACTS
+        - ROLE_CREATE_ACCESS_CONTRACTS
+        - ROLE_UPDATE_ACCESS_CONTRACTS
+        - ROLE_GET_FILLING_PLAN_ACCESS
+        - ROLE_GET_UNITS
+        - ROLE_GET_EXTERNAL_PARAMS
+        - ROLE_GET_AGENCIES
+
+    - name: Profil pour la gestion des contrats d'entrée
+      description: Gestion des contrats d'entrée dans Vitam
+      app-name: INGEST_APP
+      level:
+      roles:
+        - ROLE_GET_INGEST_CONTRACTS
+        - ROLE_CREATE_INGEST_CONTRACTS
+        - ROLE_UPDATE_INGEST_CONTRACTS
+        - ROLE_GET_FILLING_PLAN_ACCESS
+        - ROLE_GET_MANAGEMENT_CONTRACT
+        - ROLE_GET_ARCHIVE_PROFILES
+        - ROLE_GET_FILE_FORMATS
+        - ROLE_GET_UNITS
+        - ROLE_GET_EXTERNAL_PARAMS
+
+    - name: Profil consultation des contrats d'entrée
+      description: Profil pour la consultation des contrats d'entrée dans Vitam sans mises à jour des contrats
+      app-name: INGEST_APP
+      level:
+      roles:
+        - ROLE_GET_INGEST_CONTRACTS
+        - ROLE_GET_FILLING_PLAN_ACCESS
+        - ROLE_GET_MANAGEMENT_CONTRACT
+        - ROLE_GET_ARCHIVE_PROFILES
+        - ROLE_GET_FILE_FORMATS
+        - ROLE_GET_UNITS
+        - ROLE_GET_EXTERNAL_PARAMS
+
+    - name: Profil gestion des services agents
+      description: Profil de gestion du référentiel des services agent avec possibilité de mise à jour
+      app-name: AGENCIES_APP
+      level:
+      roles:
+        - ROLE_GET_AGENCIES
+        - ROLE_CREATE_AGENCIES
+        - ROLE_UPDATE_AGENCIES
+        - ROLE_DELETE_AGENCIES
+        - ROLE_EXPORT_AGENCIES
+        - ROLE_IMPORT_AGENCIES
+
+    - name: Profil consultation des services agents
+      description: Profil de consultation du référentiel des services agent sans possibilité de mise à jour
+      app-name: AGENCIES_APP
+      level:
+      roles:
+        - ROLE_GET_AGENCIES
+
+    - name: Profil pour la gestion des opérations de sécurisation
+      description: Gestion des opérations de sécurisation dans Vitam
+      app-name: SECURE_APP
+      level:
+      roles:
+        - ROLE_GET_OPERATIONS
+        - ROLE_EXPORT_OPERATIONS
+        - ROLE_GET_TIMESTAMP
+
+    - name: Profil pour le dépôt et suivi des versements
+      description: Gestion des applications de dépôt et suivi des versements
+      app-name: INGEST_MANAGEMENT_APP
+      level:
+      roles:
+        - ROLE_GET_INGEST
+        - ROLE_CREATE_INGEST
+        - ROLE_GET_ALL_INGEST
+        - ROLE_LOGBOOKS
+
+    - name: Profil Arbres et Plans
+      description: Gestion des applications d'import d'arbres de positionnement et plans de classement
+      app-name: HOLDING_FILLING_SCHEME_APP
+      level:
+      roles:
+        - ROLE_CREATE_HOLDING_FILLING_SCHEME
+        - ROLE_GET_HOLDING_FILLING_SCHEME
+        - ROLE_GET_ALL_HOLDING_FILLING_SCHEME
+
+    - name: Profil pour la création des profils paramétrage externe
+      description: Gérer et consulter l'ensemble des profils paramétrage externe
+      app-name: EXTERNAL_PARAM_PROFILE_APP
+      level:
+      roles:
+        - ROLE_CREATE_EXTERNAL_PARAM_PROFILE
+        - ROLE_EDIT_EXTERNAL_PARAM_PROFILE
+        - ROLE_SEARCH_EXTERNAL_PARAM_PROFILE
+        - ROLE_GET_PROFILES
+        - ROLE_UPDATE_PROFILES
+        - ROLE_LOGBOOKS
+
+    - name: Versement Manuel
+      description: Profil de l'application dépôt SIP SEDA
+      level:
+      app-name: MANUAL_INGEST_APP
+      roles:
+       - ROLE_UPLOAD_SIP_SEDA
+       - ROLE_GET_OPERATIONS
+
+    - name: Gestion Coffre
+      description: Profil de l'application Coffre
+      level:
+      app-name: TENANT_TREE_APP
+      roles:
+       - ROLE_GET_TENANT_TREE
+       - ROLE_CREATE_ARCHIVE_TREE
+       - ROLE_UPDATE_ARCHIVE_TREE
+       - ROLE_GET_INGEST_CONTRACTS
+       - ROLE_GET_OPERATIONS
+       - ROLE_DOWNLOAD_PROFILE
+       - ROLE_UNLOCK_ARCHIVE_TREE
+       - ROLE_GET_TENANT_HOLDING
+       - ROLE_LOGBOOKS
+       - ROLE_GET_ARCHIVE_TYPE
+       - ROLE_GET_ARCHIVE_TYPE_SEDA_FIELDS
+       - ROLE_GET_ARCHIVE_TREE
+
+    - name: Collecte
+      description: Collecte de données, Application de préparation de versements
+      app-name: COLLECT_APP
+      level:
+      roles:
+        - ROLE_GET_PROJECTS
+        - ROLE_CREATE_PROJECTS
+        - ROLE_UPDATE_PROJECTS
+        - ROLE_GET_FILLING_PLAN_ACCESS
+        - ROLE_GET_ACCESS_CONTRACTS
+        - ROLE_GET_RULES
+        - ROLE_SEND_TRANSACTIONS
+        - ROLE_CLOSE_TRANSACTIONS
+        - ROLE_UPDATE_UNITS_METADATA
+        - ROLE_REOPEN_TRANSACTIONS
+        - ROLE_ABORT_TRANSACTIONS
+        - ROLE_GET_TRANSACTIONS
+        - ROLE_CREATE_TRANSACTIONS
+        - ROLE_UPDATE_TRANSACTIONS
+        - ROLE_DELETE_TRANSACTIONS
+
+    - name: Gestion Archives
+      description: Profil de l'application de gestion des archives
+      level:
+      app-name: ARCHIVE_PROFILE_APP
+      roles:
+       - ROLE_GET_PROFILES
+       - ROLE_CREATE_PROFILES
+       - ROLE_UPDATE_PROFILES
+       - ROLE_DELETE_PROFILES
+       - ROLE_GET_ARCHIVE_PARAM
+       - ROLE_CREATE_ARCHIVE_PARAM
+       - ROLE_UPDATE_ARCHIVE_PARAM
+       - ROLE_SEARCH
+       - ROLE_GET_TENANT_HOLDING
+       - ROLE_GET_INGEST_CONTRACTS
+       - ROLE_GET_ARCHIVE_TREE
+       - ROLE_LOGBOOKS
+       - ROLE_GET_MY_ARCHIVE_TREE
+       - ROLE_GET_ARCHIVE_TYPE_SEDA_FIELDS
+       - ROLE_GET_TENANT_ARCHIVE_PARAMS
+       - ROLE_EXPORT_DIP
+       - ROLE_GET_BASKETS
+       - ROLE_CREATE_BASKETS
+       - ROLE_UPDATE_BASKETS
+       - ROLE_DELETE_BASKETS
+       - ROLE_INGEST_FILE
+       - ROLE_INGEST_ITEM
+       - ROLE_GET_ARCHIVE_LIFECYCLE
+       - ROLE_DOWNLOAD_PROFILE
+       - ROLE_GET_OPERATIONS
+       - ROLE_GET_ARCHIVE_TYPE
+       - ROLE_UPDATE_UNIT_METADATA
+       - ROLE_GET_MY_BASE_ITEMS
+       - ROLE_GET_ALL_ACCESS_CONTRACTS
+       - ROLE_GET_TENANT_TREE
+       - ROLE_SEARCH_CYCLE
+       - ROLE_CREATE_DISPOSAL_TRANSFER_ITEMS
+       - ROLE_CREATE_ACCESS_ITEMS
+       - ROLE_GET_USERS
+       - ROLE_CREATE_TRANSFER_ITEMS
+       - ROLE_EXPORT_ARCHIVE_PROFILE
+       - ROLE_CREATE_USER_EVENTS
+       - ROLE_GET_ALL_CENTERS
+       - ROLE_GET_ORIGINATING_REFERENTIAL
+       - ROLE_GET_ARCHIVE_OPERATOR
+
+    - name: Profils APP Dépôt par bordereau
+      description: Profil de l'application Profils APP Dépôt par bordereau
+      level:
+      app-name: ARCHIVE_BATCH_INGEST_PROFILE_APP
+      roles:
+        - ROLE_GET_PROFILES
+        - ROLE_CREATE_PROFILES
+        - ROLE_UPDATE_PROFILES
+        - ROLE_DELETE_PROFILES
+        - ROLE_GET_ARCHIVE_PARAM
+        - ROLE_CREATE_ARCHIVE_PARAM
+        - ROLE_UPDATE_ARCHIVE_PARAM
+        - ROLE_SEARCH
+        - ROLE_GET_TENANT_HOLDING
+        - ROLE_GET_INGEST_CONTRACTS
+        - ROLE_GET_ARCHIVE_TREE
+        - ROLE_LOGBOOKS
+        - ROLE_GET_MY_ARCHIVE_TREE
+        - ROLE_GET_ARCHIVE_TYPE_SEDA_FIELDS
+
+    - name: Référentiel Record Management
+      description: Profil de l'application Référentiel Record Management
+      level:
+      app-name: RECORD_MANAGEMENT_APP
+      roles:
+       - ROLE_GET_ARCHIVE_LIFECYCLE
+       - ROLE_CREATE_ARCHIVE_LIFECYCLE
+       - ROLE_UPDATE_ARCHIVE_LIFECYCLE
+       - ROLE_EXPORT_ARCHIVE_LIFECYCLE
+       - ROLE_LOGBOOKS
+
+    - name: Types Archives
+      description: Profil de l'application Types Archives
+      level:
+      app-name: ARCHIVE_TYPE_APP
+      roles:
+       - ROLE_GET_ARCHIVE_TYPE
+       - ROLE_CREATE_ARCHIVE_TYPE
+       - ROLE_UPDATE_ARCHIVE_TYPE
+       - ROLE_DELETE_ARCHIVE_TYPE
+       - ROLE_GET_ARCHIVE_TREE
+
+    - name: Profils d’archivage et d’unités archivistiques
+      description: Visualiser et importer des profils d’archivage et d’unités archivistiques
+      level:
+      app-name: ARCHIVAL_PROFILE_APP
+      roles:
+       - ROLE_GET_ARCHIVAL_PROFILE
+       - ROLE_CREATE_ARCHIVAL_PROFILE
+       - ROLE_UPDATE_ARCHIVAL_PROFILE
+       - ROLE_GET_ARCHIVAL_UNIT_PROFILE
+       - ROLE_CREATE_ARCHIVAL_UNIT_PROFILE
+       - ROLE_UPDATE_ARCHIVAL_UNIT_PROFILE
+       - ROLE_GET_TENANT_HOLDING
+
+    - name: Lancement de recherches par DSL
+      description: Lancement de recherches par DSL dans Vitam
+      app-name: DSL_APP
+      level:
+      roles:
+        - ROLE_GET_UNITS
+
+    - name: Profil pour la gestion des opérations
+      description: Gérer et consulter l'ensemble des opérations d'entrées qui sont en cours
+      app-name: LOGBOOK_MANAGEMENT_OPERATION_APP
+      level:
+      roles:
+        - ROLE_GET_LOGBOOK_OPERATION
+        - ROLE_GET_ALL_LOGBOOK_OPERATION
+        - ROLE_UPDATE_LOGBOOK_OPERATION
+        - ROLE_LOGBOOKS
+
+    - name: Profil pour la gestion des Audits
+      description: Gestion des audits dans Vitam
+      app-name: AUDIT_APP
+      level:
+      roles:
+        - ROLE_GET_AUDITS
+        - ROLE_RUN_AUDITS
+        - ROLE_EXPORT_OPERATIONS
+        - ROLE_GET_FILLING_PLAN_ACCESS
+        - ROLE_GET_EXTERNAL_PARAMS
+
+    - name: Profil de gestion des valeurs probantes
+      description: Gestion des valeurs probantes dans Vitam
+      app-name: PROBATIVE_VALUE_APP
+      level:
+      roles:
+        - ROLE_GET_OPERATIONS
+        - ROLE_RUN_PROBATIVE_VALUE
+
+    - name: Profil gestion des producteurs
+      description: Consulter et modifier des producteurs
+      app-name: ORIGINATING_REFERENTIAL_APP
+      level:
+      roles:
+        - ROLE_GET_ORIGINATING_REFERENTIAL
+        - ROLE_CREATE_ORIGINATING_REFERENTIAL
+        - ROLE_UPDATE_ORIGINATING_REFERENTIAL
+        - ROLE_DELETE_ORIGINATING_REFERENTIAL
+        - ROLE_GET_ORIGINATING_REFERENTIAL_TEMPLATE
+        - ROLE_GET_OPERATIONS
+
+  admin-profiles:
+    - name: Etiquettes
+      description: Profil de l'application etiquettes
+      level:
+      app-name: BARCODES_APP
+      roles:
+        - ROLE_CREATE_LOGISTIC_UNITS
+
+  other-roles:
+    - ROLE_EXPORT_DIP
+    - ROLE_GET_BASKETS
+    - ROLE_CREATE_BASKETS
+    - ROLE_UPDATE_BASKETS
+    - ROLE_DELETE_BASKETS
+    - ROLE_INGEST_FILE
+    - ROLE_INGEST_ITEM
+    - ROLE_SEARCH
+    - ROLE_GET_ARCHIVE_TYPE_SEDA_FIELDS
+    - ROLE_SEARCH_CYCLE
+    - ROLE_CREATE_ACCESS_ITEMS
+    - ROLE_CREATE_DISPOSAL_TRANSFER_ITEMS
+    - ROLE_CREATE_WITHDRAWAL_TRANSFER_ITEMS
+    - ROLE_UPDATE_ARCHIVE_LIFECYCLE
+    - ROLE_GET_TENANT_ARCHIVE_PARAMS
+    - ROLE_CREATE_TRANSFER_ITEMS
+    - ROLE_CREATE_HOLD_ITEMS
+    - ROLE_CREATE_UNHOLD_ITEMS
+    - ROLE_UPDATE_UNIT_METADATA
+    - ROLE_CREATE_INDEX_ITEMS
+    - ROLE_GET_MY_ARCHIVE_TREE
+    - ROLE_GET_MY_BASE_ITEMS
+    - ROLE_GET_ARCHIVE_PARAM
+    - ROLE_GET_ALL_ACCESS_CONTRACTS
+    - ROLE_GET_TENANT_TREE
+    - ROLE_GET_OPERATIONS
+    - ROLE_GET_INGEST_CONTRACTS
+    - ROLE_CREATE_PICKING_MANAGEMENT_ITEMS
+    - ROLE_CREATE_INTER_SITE_TRANSFER_ITEMS
+    - ROLE_UPDATE_BASE_ITEMS
+    - ROLE_VALIDATE_DISPOSAL_TRANSFER_ITEMS
+    - ROLE_REFUSE_DISPOSAL_TRANSFER_ITEMS
+    - ROLE_CANCEL_DISPOSAL_TRANSFER_ITEMS
+    - ROLE_CONFIRM_DISPOSAL_TRANSFER_ITEMS
+    - ROLE_VALIDATE_SIGNED_DISPOSAL_TRANSFER_ITEMS
+    - ROLE_ORDER_DISPOSAL_DISPOSAL_TRANSFER_ITEMS
+    - ROLE_DOWNLOAD_BASE_ITEM_DOCUMENTS
+    - ROLE_DOWNLOAD_ITEM
+    - ROLE_DOWNLOAD_ITEM_TO_SIGN
+    - ROLE_DOWNLOAD_SIGNED_ITEM
+    - ROLE_DOWNLOAD_DISPOSAL_CERTIFICATE
+    - ROLE_DOWNLOAD_SIGNED_DISPOSAL_CERTIFICATE
+    - ROLE_DOWNLOAD_FINAL_ITEM_ARCHIVE
+    - ROLE_DOWNLOAD_ARCHIVE_CERTIFICATE
+    - ROLE_DOWNLOAD_SIGNED_ARCHIVE_CERTIFICATE
+    - ROLE_UPLOAD_BASE_ITEM_DOCUMENTS
+    - ROLE_UPLOAD_SIGNED_ITEM
+    - ROLE_UPLOAD_SIGNED_ARCHIVE_CERTIFICATE
+    - ROLE_DELETE_BASE_ITEM_DOCUMENTS
+    - ROLE_DELETE_SIGNED_ITEM
+    - ROLE_DELETE_SIGNED_ARCHIVE_CERTIFICATE
+    - ROLE_GET_OPERATIONS
+    - ROLE_GET_FILE_OPERATIONS
+    - ROLE_DOWNLOAD_INTER_SITE_TRANSFER
+    - ROLE_DOWNLOAD_DELIVERY_ITEM_DOCUMENTS
+    - ROLE_PROCESS_ACCESS_ITEMS
+    - ROLE_CREATE_PHYSICAL_REMOVAL_ITEMS
+    - ROLE_PERFORM_ACTION_ITEMS_ALL_CUSTOMERS
+    - ROLE_VALIDATE_IMPORT_ACCESS_ITEMS
+    - ROLE_GET_BASE_ITEMS_ALL_CUSTOMERS
+    - ROLE_UPLOAD_SIGNED_DISPOSAL_CERTIFICATE
+    - ROLE_DELETE_SIGNED_DISPOSAL_CERTIFICATE
+    - ROLE_PERFORM_DISPOSAL_DISPOSAL_TRANSFER_ITEMS
+    - ROLE_VALIDATE_DISPOSAL_CERTIFICATE_DISPOSAL_TRANSFER_ITEMS
+    - ROLE_ADMIN_REFUSE_DISPOSAL_TRANSFER_ITEMS
+    - ROLE_ADMIN_CANCEL_DISPOSAL_TRANSFER_ITEMS
+    - ROLE_ORDER_FINALIZATION_DISPOSAL_TRANSFER_ITEMS
+    - ROLE_GET_ITEMS_HISTORY_ALL_CUSTOMERS
+    - ROLE_UPLOAD_ARCHIVE_IMPORTED
+    - ROLE_DELETE_ARCHIVE_IMPORTED
+    - ROLE_DOWNLOAD_ARCHIVE_IMPORTED
+    - ROLE_DOWNLOAD_DISPOSABLE_UNITS
+    - ROLE_UPLOAD_CONSOLIDATED_DISPOSABLE_UNITS
+    - ROLE_DOWNLOAD_CONSOLIDATED_DISPOSABLE_UNITS
+    - ROLE_DELETE_CONSOLIDATED_DISPOSABLE_UNITS
+    - ROLE_VALIDATE_CONSOLIDATED_DISPOSAL_TRANSFER_ITEMS
+    - ROLE_GET_HISTORIES
+    - ROLE_GET_PRINTERS
+    - ROLE_USE_PRINTERS
+    - ROLE_CREATE_OUTFLOW_MANAGEMENT_ITEMS
+    - ROLE_GET_TENANT_ARCHIVE_PARAMS_ALL_TENANTS_MY_CUSTOMER
+    - ROLE_DOWNLOAD_INTEGRITY_ATTESTATION
+    - ROLE_EXPORT_UNITS
+    - ROLE_CREATE_QUALITY_CONTROL_MANAGEMENT_ITEMS
+    - ROLE_GET_CUSTOMER_ARCHIVE_PARAMS
+    - ROLE_CREATE_CUSTOMER_ARCHIVE_PARAMS
+    - ROLE_UPDATE_CUSTOMER_ARCHIVE_PARAMS
+    - ROLE_DELETE_CUSTOMER_ARCHIVE_PARAMS
+    - ROLE_GET_CODE_RANGE
+    - ROLE_CREATE_CODE_RANGE
+    - ROLE_UPDATE_CODE_RANGE
+    - ROLE_CREATE_DESTRUCTION_ITEMS
+    - ROLE_UPDATE_ARCHIVE_ROOM
+    - ROLE_CREATE_ARCHIVE_ROOM
+    - ROLE_GET_ARCHIVE_ROOM
+    - ROLE_GET_BUILDINGS
+    - ROLE_CREATE_BUILDINGS
+    - ROLE_UPDATE_BUILDINGS
+    - ROLE_DELETE_BUILDINGS
+    - ROLE_GET_CENTERS
+    - ROLE_GET_ALL_CENTERS
+    - ROLE_CREATE_CENTERS
+    - ROLE_UPDATE_CENTERS
+    - ROLE_DELETE_CENTERS
+    - ROLE_GET_ROOMS
+    - ROLE_CREATE_ROOMS
+    - ROLE_UPDATE_ROOMS
+    - ROLE_DELETE_ROOMS
+    - ROLE_GET_SITES
+    - ROLE_CREATE_SITES
+    - ROLE_UPDATE_SITES
+    - ROLE_DELETE_SITES
+    - ROLE_GET_LOGISTIC_HISTORIES
+    - ROLE_CREATE_LOGISTIC_HISTORIES
+    - ROLE_GET_LOGISTIC_UNITS
+    - ROLE_CREATE_LOGISTIC_UNITS
+    - ROLE_UPDATE_LOGISTIC_UNITS
+    - ROLE_DELETE_LOGISTIC_UNITS
+    - ROLE_GET_BARCODE_REPOSITORIES
+    - ROLE_CREATE_BARCODE_REPOSITORIES
+    - ROLE_UPDATE_BARCODE_REPOSITORIES
+    - ROLE_DELETE_BARCODE_REPOSITORIES
+    - ROLE_GET_ARCHIVE_OPERATOR
+    - ROLE_CREATE_ARCHIVE_OPERATOR
+    - ROLE_UPDATE_ARCHIVE_OPERATOR
+    - ROLE_DELETE_ARCHIVE_OPERATOR
+    - ROLE_GET_RACKS
+    - ROLE_CREATE_RACKS
+    - ROLE_UPDATE_RACKS
+    - ROLE_DELETE_RACKS
+    - ROLE_GET_CONTAINER_TYPES
+    - ROLE_CREATE_CONTAINER_TYPES
+    - ROLE_UPDATE_CONTAINER_TYPES
+    - ROLE_DELETE_CONTAINER_TYPES
+    - ROLE_GET_LOCATIONS
+    - ROLE_CREATE_LOCATIONS
+    - ROLE_UPDATE_LOCATIONS
+    - ROLE_DELETE_LOCATIONS
+    - ROLE_GET_LOGISTIC_OWNERS
+    - ROLE_CREATE_LOGISTIC_OWNERS
+    - ROLE_UPDATE_LOGISTIC_OWNERS
+    - ROLE_DELETE_LOGISTIC_OWNERS
+    - ROLE_GET_PHYSICAL_AGENCY
+    - ROLE_CREATE_PHYSICAL_AGENCY
+    - ROLE_UPDATE_PHYSICAL_AGENCY
+    - ROLE_DELETE_PHYSICAL_AGENCY
+    - ROLE_GET_USERS
+    - ROLE_UPDATE_USERS
+    - ROLE_GET_CUSTOMER_ARCHIVE_PARAMS
+    - ROLE_GET_LOGISTIC_UNIT_TYPES
+    - ROLE_CREATE_LOGISTIC_UNIT_TYPES
+    - ROLE_UPDATE_LOGISTIC_UNIT_TYPES
+    - ROLE_UPLOAD_COUNTER_SIGNED_ITEM
+    - ROLE_DOWNLOAD_COUNTER_SIGNED_ITEM
+    - ROLE_CREATE_DISPOSAL_MANAGEMENT_ITEMS
+    - ROLE_CREATE_ENTRY_MANAGEMENT_ITEMS
+    - ROLE_CREATE_REINSTATEMENT_MANAGEMENT_ITEMS
+    - ROLE_GET_BASE_ITEMS
+    - ROLE_CREATE_INTER_LOCATION_TRANSFER_ITEMS
+    - ROLE_GET_CONSOLIDATION_SITE_PARAMS
+    - ROLE_GET_REGIONS
+    - ROLE_GET_OWNER_STORAGE_SITES
+    - ROLE_CREATE_OWNER_STORAGE_SITES
+    - ROLE_UPDATE_OWNER_STORAGE_SITES
+    - ROLE_DELETE_OWNER_STORAGE_SITES
+    - ROLE_GET_OWNER_LOGISTIC_INSTRUCTIONS
+    - ROLE_CREATE_OWNER_LOGISTIC_INSTRUCTIONS
+    - ROLE_UPDATE_OWNER_LOGISTIC_INSTRUCTIONS
+    - ROLE_DELETE_OWNER_LOGISTIC_INSTRUCTIONS
+    - ROLE_GET_USER_ACTIVITIES
+    - ROLE_GET_AGENCIES
+    - ROLE_CREATE_USER_EVENTS
+    - ROLE_CREATE_RULE_MODIFICATION_ITEMS
+    - ROLE_GET_THIRD_PARTY_ARCHIVE_OPERATOR
+    - ROLE_CREATE_METADATA_MODIFICATION_ITEMS
+    - ROLE_RETRY_SUPERVISION_ITEMS
