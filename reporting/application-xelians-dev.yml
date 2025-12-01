@@ -1,0 +1,88 @@
+spring:
+  application:
+    name: reporting
+  cloud:
+    consul:
+      discovery:
+        ipAddress: ${IP_INSTANCE}
+        instance-id: reporting-internal-${ENVIRONMENT}
+        health-check-url: http://${IP_INSTANCE}:5010/actuator/health
+  data:
+    mongodb:
+      uri: "mongodb://reporting:reporting@${IP_INSTANCE}:27019/reporting?connectTimeoutMS=2000"
+
+sae:
+  type: hybrid
+  esafe:
+    organization:
+      id-strategy: RANDOM
+    url: https://esafe-integration.xelians-dev.fr
+    loggerLevel: FULL
+    security:
+      user:
+        username: root
+        api-key: xxxx
+  hybrid:
+    default-sae: vitam
+    tenant-mapping:
+      type: file
+      file:
+        path: /xelians-apps/data/iam_internal/tenant.json
+
+server:
+  port: 6010
+  max-http-request-header-size: 10KB
+
+management:
+  opentelemetry:
+    resource-attributes:
+      deployment.environment: rabbit
+  otlp:
+    tracing:
+      endpoint: http://tracing.xelians-dev.fr:4318/v1/traces
+  metrics:
+    tags:
+      instance: ${IP_INSTANCE}
+      hostname: rabbit-xam
+      environment: ${ENVIRONMENT}
+  server:
+    port: 5010
+
+logging:
+  level:
+    fr.locarchives.dlab: DEBUG
+    fr.gouv.vitamui.referential.internal.server: INFO
+
+security:
+  system:
+    token: tokapiflow_x2wiZu3B5grvDfVH
+
+reporting-internal:
+  archive-client:
+    server-host: archive-internal.service.consul
+    server-port: 6014
+  iam-internal-client:
+    server-host: iam-internal.service.consul
+    server-port: 6003
+  flow-internal-client:
+    server-host: flow-internal.service.consul
+    server-port: 6018
+    read-time-out: 300
+    write-time-out: 300
+
+tenants-to-exclude: -1, 1, 20, 27, 10, 11, 10, 11, 102, 103, 104, 105, 106
+job:
+  launch-on-startup: False
+  reporting-data-for-current-day: False
+  number-of-days-to-catch-up: 1
+  stock:
+    cronExpression: 0 0 10 ? * *
+    zone: Europe/Paris
+    chunk: 10
+    maximum-years: 10
+
+springdoc:
+  app:
+    openIdConnectUrl: https://${ENVIRONMENT}.xelians-dev.fr/cas/oidc/.well-known/openid-configuration
+  swagger-ui:
+    enabled: True

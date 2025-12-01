@@ -1,0 +1,52 @@
+spring:
+  application:
+    name: iam
+  cloud:
+    consul:
+      discovery:
+        preferIpAddress: true
+        ipAddress: ${IP_INSTANCE}
+        instance-id: iam-internal-${ENVIRONMENT}
+        health-check-url: http://${IP_INSTANCE}:5003/actuator/health
+
+  mail:
+    test-connection: false
+    host: smtp-xam-int.xelians-dev.fr
+    port: 2525
+    username: no-reply.${ENVIRONMENT}.dlab@xelians.fr
+    password:
+    mail-from: no-${ENVIRONMENT}.dlab@xelians.fr
+    properties:
+      mail:
+        smtp:
+          auth: False
+          starttls:
+            enable: false
+
+logging:
+  level:
+    fr.gouv.vitamui: DEBUG
+    fr.gouv.vitamui.iam.internal.server: DEBUG
+
+server:
+  port: 6003
+  max-http-request-header-size: 10KB
+
+gdpr_alert_readonly: true
+
+management:
+  otlp:
+    tracing:
+      endpoint: http://tracing.xelians-dev.fr:4318/v1/traces
+  server:
+    port: 5003
+
+login:
+  url: https://${ENVIRONMENT}.xelians-dev.fr/cas/login
+
+provisioning-client:
+  token-api-user-provisioning: "tokUserprov_ie6UZsEcHIWrfv2xh7Fp9Ce7"
+
+security:
+  system:
+    token: tokapiflow_x2wiZu3B5grvDfVH

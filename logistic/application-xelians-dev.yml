@@ -1,0 +1,55 @@
+spring:
+  application:
+    name: logistic
+  cloud:
+    consul:
+      discovery:
+        ipAddress: ${IP_INSTANCE}
+        instance-id: logistic-internal-${ENVIRONMENT}
+        health-check-url: http://${IP_INSTANCE}:5015/actuator/health
+
+  datasource:
+    url: jdbc:postgresql://${IP_INSTANCE}:5432/logistic
+    username: "logistic"
+    password: "p@s79res"
+
+logging:
+  level:
+    fr.locarchives.dlab: DEBUG
+
+server:
+  port: 6015
+  max-http-request-header-size: 10KB
+
+management:
+  opentelemetry:
+    resource-attributes:
+      deployment.environment: rabbit
+  otlp:
+    tracing:
+      endpoint: http://tracing.xelians-dev.fr:4318/v1/traces
+  tracing:
+    enabled: True
+  zipkin:
+    tracing:
+      endpoint: http://${IP_INSTANCE}:9411/api/v2/spans
+  metrics:
+    tags:
+      instance: ${IP_INSTANCE}
+      hostname: rabbit-xam
+      environment: ${ENVIRONMENT}
+  server:
+    port: 5015
+
+security:
+  system:
+    token: tokapiflow_x2wiZu3B5grvDfVH
+
+workspace:
+  tempPath: "/xelians-apps/data/logistic_internal/workspace/tmp"
+
+springdoc:
+  app:
+    openIdConnectUrl: https://${ENVIRONMENT}.xelians-dev.fr/cas/oidc/.well-known/openid-configuration
+  swagger-ui:
+    enabled: True
