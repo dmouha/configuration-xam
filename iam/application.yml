@@ -1,0 +1,197 @@
+################################################################################
+# COMMON CONFIG (active for all profiles)
+################################################################################
+spring:
+  cloud:
+    consul:
+      enabled: ${CONSUL_ENABLED:true}
+      host: ${CONSUL_HOST:localhost}
+      discovery:
+        prefer-ip-address: true
+        ip-address: ${IP_INSTANCE}
+        tags: iam-internal, api, internal, xam
+        instance-id: iam-internal-${HOSTNAME}
+        scheme: https
+        health-check-url: http://${IP_INSTANCE}:${MANAGEMENT_PORT:5201}/actuator/health
+        health-check-tls-skip-verify: true
+    openfeign:
+      httpclient:
+        disable-ssl-validation: ${OPENFEIGN_HTTPCLIENT_DISABLE_SSL_VALIDATION:true}
+      client:
+        config:
+          default:
+            loggerLevel: ${OPENFEIGN_CLIENT_CONFIG_DEFAULT_LOGGER_LEVEL:basic}
+
+  data:
+    mongodb:
+      uri: mongodb://${MONGO_IAM_USERNAME:api-iam}:${MONGO_IAM_PASSWORD:api-iam}@${ENDPOINTS_MONGO}/${MONGO_IAM_DATABASE:iam}?connectTimeoutMS=${MONGO_CONNECT_TIMEOUT_MS:2000}
+
+  mail:
+    test-connection: false
+    host: ${SMTP_HOST}
+    port: ${SMTP_PORT:25}
+    username: ${SMTP_USERNAME}
+    password: ${SMTP_PASSWORD}
+    mail-from: ${SMTP_MAIL_FROM}
+    properties:
+      mail:
+        smtp:
+          auth: ${SMTP_AUTH:true}
+          starttls:
+            enable: ${SMTP_ENABLE_STARTTLS:true}
+
+logging:
+  file:
+    name: ${LOG_FILE_PATH:/app/logs/iam_internal.json.log}
+  level:
+    fr.gouv.vitamui: ${IAM_LOG_LEVEL:INFO}
+    fr.gouv.vitamui.iam.internal.server: ${IAM_SERVER_LOG_LEVEL:INFO}
+
+server:
+  forward-headers-strategy: framework
+  port: ${SERVER_PORT:6201}
+  ssl:
+    enabled: ${SERVER_SSL_ENABLED:true}
+    key-store: ${SERVER_SSL_KEYSTORE:/app/conf/iam/keystore.p12}
+    key-store-password: ${SERVER_SSL_KEYSTORE_PASSWORD:changeme}
+    key-password: ${SERVER_SSL_KEY_PASSWORD:${SERVER_SSL_KEYSTORE_PASSWORD:changeme}}
+  max-http-request-header-size: ${SERVER_MAX_HTTP_REQUEST_HEADER_SIZE:10KB}
+  tomcat:
+    accesslog:
+      enabled: ${SERVER_TOMCAT_ACCESSLOG_ENABLED:false}
+      directory: ${SERVER_TOMCAT_ACCESSLOG_DIRECTORY:/app/logs/}
+
+gdpr_alert_readonly: ${GDPR_ALERT_READONLY:true}
+
+management:
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      instance: ${IP_INSTANCE}
+      hostname: ${HOSTNAME}
+      environment: ${ENVIRONMENT}
+  server:
+    port: ${MANAGEMENT_PORT:5201}
+    ssl:
+      enabled: ${MANAGEMENT_SERVER_SSL_ENABLED:false}
+
+login:
+  url: ${CAS_SERVER_LOGIN_URL}
+
+theme:
+  vitamui-platform-name: ${PLATFORM_NAME:X-AM}
+
+login.attempts.maximum.failures: ${IAM_LOGIN_ATTEMPTS_MAXIMUM_FAILURES:5}
+login.attempts.time.interval: ${IAM_LOGIN_ATTEMPTS_TIME_INTERVAL:20}
+
+vitam.tenant.init.mandatory: ${IAM_TENANT_INIT_MANDATORY:true}
+
+logbook:
+  scheduling:
+    enabled: ${LOGBOOK_SCHEDULING_ENABLED:true}
+    sendEventToVitamTasks:
+      delay: ${LOGBOOK_SCHEDULING_DELAY:60000}
+
+customer.init.config.file: ${CUSTOMER_INIT_CONFIG_FILE:/app/conf/iam/customer-init.yml}
+
+user.connection.tracing.enabled: ${USER_CONNECTION_TRACING_ENABLED:true}
+
+address:
+  max-street-length: ${ADDRESS_MAX_STREET_LENGTH:200}
+
+password:
+  max-old-password: ${PASSWORD_MAX_OLD_PASSWORD:12}
+
+token.ttl: ${USER_TOKEN_TTL:60}
+token.additional.ttl: ${USER_TOKEN_ADDITIONAL_TTL:60}
+subrogaton.token.ttl: ${USER_SUBROGATION_TOKEN_TTL:60}
+api.token.ttl: ${API_TOKEN_TTL:60}
+generic.users.subrogation.ttl: ${GENERIC_USERS_SUBROGATION_TTL:60}
+subrogation.ttl: ${SUBROGATION_TTL:60}
+
+springdoc:
+  app:
+    openIdConnectUrl: ${OIDC_DISCOVERY_URL}
+  swagger-ui:
+    oauth:
+      client-id: ${SWAGGER_CLIENT_ID:iam-swagger}
+    enabled: ${SWAGGER_ENABLED:false}
+
+app:
+  cache:
+    type: ${APP_CACHE_TYPE:DEFAULT}
+
+security:
+  system:
+    identity: ${SECURITY_SYSTEM_IDENTITY:api-iam-internal}
+    applicationId: ${SECURITY_SYSTEM_APPLICATION_ID:api-iam-internal}
+    token: ${TOKEN_API_IAM}
+    userId: ${SECURITY_SYSTEM_USER_ID:apiflowuser}
+
+###########################
+# Profile: kubernetes
+###########################
+---
+spring:
+  config:
+    activate:
+      on-profile: kubernetes
+  cloud:
+    kubernetes:
+      reload:
+        enabled: ${K8S_RELOAD_ENABLED:true}
+      discovery:
+        enabled: ${K8S_DISCOVERY_ENABLED:true}
+
+###########################
+# Profile: opentelemetry
+###########################
+---
+spring:
+  config:
+    activate:
+      on-profile: opentelemetry
+management:
+  otlp:
+    tracing:
+      endpoint: ${OTLP_TRACING_ENDPOINT:http://127.0.0.1:4318/v1/traces}
+  tracing:
+    enabled: ${TRACING_ENABLED:false}
+
+###########################
+# Profile: baremetal
+###########################
+---
+spring:
+  config:
+    activate:
+      on-profile: baremetal
+
+###########################
+# Profile: sae (only if configured)
+###########################
+---
+spring:
+  config:
+    activate:
+      on-profile: sae
+sae:
+  type: ${SAE_TYPE}
+  esafe:
+    organization:
+      id-strategy: ${SAE_ESAFE_ORGANIZATION_ID_STRATEGY:SEQUENCE}
+    url: ${SAE_ESAFE_URL}
+    loggerLevel: ${SAE_ESAFE_LOGGER_LEVEL:basic}
+    security:
+      oauth2:
+        client:
+          registration-id: ${SAE_ESAFE_CLIENT_REGISTRATION_ID}
+      user:
+        name: ${SAE_ESAFE_USER_NAME}
+        access-key: ${SAE_ESAFE_USER_ACCESS_KEY}
+  hybrid:
+    default-sae: ${SAE_HYBRID_DEFAULT:vitam}
+    tenant-mapping:
+      type: file
+      file:
+        path: ${SAE_HYBRID_TENANT_MAPPING_FILE_PATH}

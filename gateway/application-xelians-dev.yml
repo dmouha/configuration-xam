@@ -1,0 +1,24 @@
+server:
+  port: 8090
+  max-http-request-header-size: 10KB
+
+management:
+  opentelemetry:
+    resource-attributes:
+      deployment.environment: ${ENVIRONMENT}
+  otlp:
+    tracing:
+      endpoint: http://tracing.xelians-dev.fr:4318/v1/traces
+      export:
+        enabled: True
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      instance: ${IP_INSTANCE}
+      hostname: ${HOSTNAME}
+      environment: ${ENVIRONMENT}
+  server:
+    port: 7090
+
+security:
+  client-certificate-header-name: x-ssl-cert

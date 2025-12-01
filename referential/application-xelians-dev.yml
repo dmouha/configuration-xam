@@ -1,0 +1,61 @@
+spring:
+  application:
+    name: referential
+  cloud:
+    consul:
+      discovery:
+        ipAddress: ${IP_INSTANCE}
+        instance-id: referential-internal-${ENVIRONMENT}
+        health-check-url: http://${IP_INSTANCE}:5205/actuator/health
+
+  servlet:
+    multipart:
+      max-file-size: -1
+      max-request-size: -1
+
+sae:
+  type: hybrid
+  esafe:
+    organization:
+      id-strategy: RANDOM
+    url: https://esafe-integration.xelians-dev.fr
+    loggerLevel: FULL
+    security:
+      user:
+        username: root
+        api-key: xxxx
+  hybrid:
+    default-sae: vitam
+    tenant-mapping:
+      type: file
+      file:
+        path: /xelians-apps/data/iam_internal/tenant.json
+
+logging:
+  level:
+    fr.gouv.vitamui: DEBUG
+
+server:
+  port: 6205
+  max-http-request-header-size: 10KB
+
+management:
+  opentelemetry:
+    resource-attributes:
+      deployment.environment: rabbit
+  otlp:
+    tracing:
+      endpoint: http://tracing.xelians-dev.fr:4318/v1/traces
+  metrics:
+    tags:
+      instance: ${IP_INSTANCE}
+      hostname: rabbit-xam
+      environment: ${ENVIRONMENT}
+  server:
+    port: 5205
+
+springdoc:
+  app:
+    openIdConnectUrl: https://${ENVIRONMENT}.xelians-dev.fr/cas/oidc/.well-known/openid-configuration
+  swagger-ui:
+    enabled: True

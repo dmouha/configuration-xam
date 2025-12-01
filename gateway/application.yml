@@ -1,0 +1,200 @@
+################################################################################
+# COMMON CONFIG (active for all profiles)
+################################################################################
+server:
+  port: ${SERVER_PORT:8090}
+  ssl:
+    enabled: ${SERVER_SSL_ENABLED:true}
+    key-store: ${SERVER_SSL_KEYSTORE:/app/conf/gateway/keystore.p12}
+    key-store-password: ${SERVER_SSL_KEYSTORE_PASSWORD:changeme}
+    key-password: ${SERVER_SSL_KEY_PASSWORD:${SERVER_SSL_KEYSTORE_PASSWORD:changeme}}
+  max-http-request-header-size: ${SERVER_MAX_HTTP_REQUEST_HEADER_SIZE:10KB}
+  tomcat:
+    accesslog:
+        enabled: ${SERVER_TOMCAT_ACCESSLOG_ENABLED:false}
+        directory: ${SERVER_TOMCAT_ACCESSLOG_DIRECTORY:/app/logs/gateway}
+
+management:
+  metrics:
+    tags:
+      application: ${spring.application.name}
+      instance: ${IP_INSTANCE}
+      hostname: ${HOSTNAME}
+      environment: ${ENVIRONMENT}
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  server:
+    port: ${MANAGEMENT_PORT:7090}
+    ssl:
+      enabled: ${MANAGEMENT_SERVER_SSL_ENABLED:false}
+
+security:
+  client-certificate-header-name: ${CLIENT_CERTIFICATE_HEADER_NAME:x-ssl-cert}
+
+spring:
+  application:
+    name: gateway-server
+  cloud:
+    config:
+      enabled: false
+    discovery:
+      enabled: false
+    gateway:
+      httpserver:
+        wiretap: false
+      httpclient:
+        wiretap: false
+        ssl:
+          use-insecure-trust-manager: true
+      default-filters:
+        - DedupeResponseHeader=Vary, RETAIN_UNIQUE
+        - DedupeResponseHeader=Access-Control-Allow-Origin Access-Control-Allow-Methods Access-Control-Allow-Headers
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+            - "https://${SERVER_NAME}"
+            - "http://localhost"
+            - "https://localhost"
+            allowed-origin-patterns:
+              - ${GATEWAY_ALLOWED_ORIGIN_PATTERN_1:}
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            maxAge: 1800
+      routes:
+        - id: iam-internal-service
+          uri: ${IAM_URI:https://${IAM_SERVER_HOST:iam-internal.service.consul}:${IAM_SERVER_PORT:6201}}
+          predicates:
+            - |
+              Path=
+              /portal-api/security,
+              /portal-api/userinfos/me,
+              /portal-api/ui/applications/**,
+              /portal-api/users/analytics,
+              /portal-api/subrogations/**,
+              /portal-api/incidentreport/**,
+
+              /identity-api/security,
+              /identity-api/userinfos/**,
+              /identity-api/ui/applications/**,
+              /identity-api/subrogations/**,
+              /identity-api/customers/**,
+              /identity-api/tenants/**,
+              /identity-api/owners/**,
+              /identity-api/providers/**,
+              /identity-api/groups/**,
+              /identity-api/users/**,
+              /identity-api/profiles/**,
+              /identity-api/accesscontracts/**,
+              /identity-api/externalparamprofile/**,
+              /identity-api/incidentreport/**,
+
+              /referential-api/security$,
+              /referential-api/security/**,
+              /referential-api/userinfos/**,
+              /referential-api/ui/applications/**,
+              /referential-api/users/analytics,
+              /referential-api/subrogations/**,
+              /referential-api/logbooks/operations/**,
+              /referential-api/tenants/**,
+              /referential-api/customers/**,
+              /referential-api/accesscontracts/**,
+              /referential-api/profiles/**,
+              /referential-api/externalparameters/**,
+              /referential-api/incidentreport/**,
+
+              /archive-api/ui/**,
+              /archive-api/security,
+              /archive-api/userinfos/me,
+              /archive-api/users/**,
+              /archive-api/profiles/**,
+              /archive-api/customers/**,
+              /archive-api/tenants/**,
+              /archive-api/logbooks/**,
+              /archive-api/subrogations/**,
+              /archive-api/owners/**,
+              /archive-api/incidentreport/**,
+
+              /flow-api/security,
+              /flow-api/userinfos/me,
+              /flow-api/ui/applications/**,
+              /flow-api/users/**,
+              /flow-api/subrogations/**,
+              /flow-api/logbooks/operations/**,
+              /flow-api/tenants/**,
+              /flow-api/customers/**,
+              /flow-api/accesscontracts/**,
+              /flow-api/profiles/**,
+              /flow-api/incidentreport/**,
+
+              /reporting-api/security,
+              /reporting-api/ui/**,
+              /reporting-api/userinfos/me,
+              /reporting-api/users/analytics,
+              /reporting-api/subrogations/**,
+              /reporting-api/incidentreport/**,
+
+              /logistic-api/security,
+              /logistic-api/ui/**,
+              /logistic-api/userinfos/me,
+              /logistic-api/users/**,
+              /logistic-api/subrogations/**,
+              /logistic-api/profiles/**,
+              /logistic-api/incidentreport/**,
+
+              /wms-api/security/**,
+              /wms-api/userinfos/**,
+              /wms-api/ui/**,
+              /wms-api/tenants/**,
+              /wms-api/customers/**,
+              /wms-api/profiles/**,
+              /wms-api/users/**,
+              /wms-api/incidentreport/**,
+
+              /provisioning-api/security,
+              /provisioning-api/ui/**,
+              /provisioning-api/userinfos/me,
+              /provisioning-api/users/**,
+              /provisioning-api/groups/**,
+              /provisioning-api/customers/**,
+              /provisioning-api/tenants/**,
+              /provisioning-api/subrogations/**,
+              /provisioning-api/incidentreport/**
+
+          filters:
+            - RewritePath=/portal-api/ui/(?<segment>.*),/iam/v1/$\{segment}
+            - RewritePath=/portal-api/(?<segment>.*),/iam/v1/$\{segment}
+            - RewritePath=/identity-api/ui/(?<segment>.*),/iam/v1/$\{segment}
+            - RewritePath=/identity-api/logbooks(?<segment>.*),/v1/logbooks$\{segment},
+            - RewritePath=/identity-api/accesscontracts(?<segment>.*),/v1/accesscontracts$\{segment},
+            - RewritePath=/identity-api/(?<segment>.*),/iam/v1/$\{segment}
+            - RewritePath=/referential-api/ui/(?<segment>.*),/iam/v1/$\{segment}
+            - RewritePath=/referential-api/externalparameters(?<segment>.*),/iam/v1/externalparameters/me$\{segment},
+            - RewritePath=/referential-api/logbooks/operations(?<segment>.*),/v1/logbooks/operations$\{segment},
+            - RewritePath=/referential-api/(?<segment>.*),/iam/v1/$\{segment}
+            - RewritePath=/flow-api/logbooks/(?<segment>.*),/v1/logbooks/$\{segment}
+            - RewritePath=/flow-api/accesscontracts(?<segment>.*),/v1/accesscontracts/$\{segment}
+            - RewritePath=/flow-api/(?<segment>.*),/flow/v1/$\{segment}
+            - RewritePath=/reporting-api/ui/(?<segment>.*),/iam/v1/$\{segment}
+            - RewritePath=/reporting-api/(?<segment>.*),/reporting/v1/$\{segment}
+            - RewritePath=/logistic-api/logbooks(?<segment>.*),/v1/logbooks$\{segment},
+            - RewritePath=/logistic-api/accesscontracts(?<segment>.*),/v1/accesscontracts$\{segment},
+            - RewritePath=/logistic-api/(?<segment>.*),/logistic/v1/$\{segment}
+            - RewritePath=/wms-api/(?<segment>.*),/wms/v1/$\{segment}
+            - RewritePath=/provisioning-api/ui/(?<segment>.*),/iam/v1/$\{segment}
+            - RewritePath=/provisioning-api/(?<segment>.*),/iam/v1/$\{segment}
+        - id: iam-internal-login
+          uri: ${IAM_LOGIN_URI:https://${IAM_SERVER_HOST:iam-internal.service.consul}:${IAM_SERVER_PORT:6201}}
+          predicates:
+            - Path=/iam/login
+          filters:
+            - RewritePath=/iam/login,/portal/login
+        - id: iam-internal-saml
+          uri: ${IAM_LOGIN_URI:https://${IAM_SERVER_HOST:iam-internal.service.consul}:${IAM_SERVER_PORT:6201}}
+          predicates:
+            - Path=/iam/clients/**
+          filters:
+            - RewritePath=/iam/clients/(?<segment>.*),/clients/$\{segment}
+      default-filters: ${GATEWAY_DEFAULT_FILTERS:}
